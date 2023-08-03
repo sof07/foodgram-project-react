@@ -6,7 +6,6 @@ from .models import Recipe, Ingredient, Tag
 from .serializers import (RecipeSerializer,
                           UserSerializer,
                           IngredientSerializer,
-                          SignupSerializer,
                           TagSerialaser)
 from users.models import CustomUser
 from rest_framework.decorators import action
@@ -18,56 +17,6 @@ from django.conf import settings
 from rest_framework_simplejwt import serializers as jwt_serializers
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.views import TokenObtainPairView
-
-
-class RegistrationView(APIView):
-    """
-    ViewSet для регистрации пользователей.
-
-    Разрешения (permissions):
-        - `AllowAny`: Разрешено любому пользователю,
-        даже неаутентифицированному.
-    """
-
-    permission_classes = (permissions.AllowAny, )
-
-    def post(self, request):
-        """
-        Создает нового пользователя на основе данных запроса
-        и отправляет письмо с подтверждением.
-        """
-        serializer = SignupSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data.get('username')
-        email = serializer.validated_data.get('email')
-        first_name = serializer.validated_data.get('first_name')
-        last_name = serializer.validated_data.get('last_name')
-        password = serializer.validated_data.get('password')
-        user, created = CustomUser.objects.get_or_create(
-            username=username,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            password=password
-        )
-        if created:
-            user.save()
-        self.send_token(user)
-        return Response(serializer.validated_data, status=status.HTTP_200_OK)
-
-    def send_token(self, user):
-        """
-        Генерирует токен и отправляет пользователю.
-        """
-        confirmation_code = default_token_generator.make_token(user)
-        print(confirmation_code)
-        send_mail(
-            settings.EMAIL_SUBJECT,
-            settings.EMAIL_BODY.format(code=confirmation_code),
-            settings.EMAIL_FROM,
-            [user.email],
-            fail_silently=False,
-        )
 
 
 class TokenObtainPairView(TokenObtainPairView):

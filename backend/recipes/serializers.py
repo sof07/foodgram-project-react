@@ -74,20 +74,21 @@ class UserSerializer(serializers.ModelSerializer):
         return data
 
 
-class SignupSerializer(UserSerializer):
+class SpecialUserSerializer(UserSerializer):
     """
     Сериализатор для регистрации пользователя.
     Наследуется от UserSerializer.
     """
-
+    password = serializers.CharField(write_only=True)#Поле не отображается в ответе
     class Meta:
         model = CustomUser
-        extra_kwargs = {'password': {'write_only': True}}
         fields = ('email',
+                  'id',
                   'username',
                   'first_name',
                   'last_name',
                   'password',)
+        read_only_fields = ('id',)
 
 class TagSerialaser(serializers.ModelSerializer):
     class Meta:

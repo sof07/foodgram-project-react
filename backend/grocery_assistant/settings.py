@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
     'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'djoser',
     'autoslug',
     'django_extensions',
@@ -134,17 +136,25 @@ REST_FRAMEWORK = {
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 5,
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
 }
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
-
+# SIMPLE_JWT = {
+#    'AUTH_HEADER_TYPES': ('JWT',),
+# }
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # User sign-up
 EMAIL_FROM = 'from@example.com'
 EMAIL_SUBJECT = 'Confirmation letter.'
 EMAIL_BODY = 'Confirmation code is {code}'
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'recipes.serializers.SpecialUserSerializer',
+        },
+}
