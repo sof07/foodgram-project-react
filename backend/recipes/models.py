@@ -1,5 +1,7 @@
 from django.db import models
-from users.models import User
+from users.models import CustomUser
+
+from autoslug import AutoSlugField
 
 
 class Ingredient(models.Model):
@@ -14,13 +16,13 @@ class Ingredient(models.Model):
         __str__(): Возвращает название ингредиента в виде строки
     """
 
-    title = models.CharField('Название ингредиента', max_length=250)
-    quantity = models.DecimalField(
-        'Количество', max_digits=10, decimal_places=2)
-    unit_measurement = models.CharField('Единица измерения', max_length=100)
+    name = models.CharField(max_length=250)
+    # amount = models.DecimalField(
+    #     'Количество', max_digits=10, decimal_places=2)
+    measurement_unit = models.CharField('Единица измерения', max_length=100)
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
 class Tag(models.Model):
@@ -33,6 +35,8 @@ class Tag(models.Model):
     """
 
     name = models.CharField(max_length=50)
+    color = models.CharField(max_length=16)
+    slug = AutoSlugField(unique=True, populate_from='name')
 
     def __str__(self):
         return self.name
@@ -55,20 +59,23 @@ class Recipe(models.Model):
     """
 
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='recipes')
-    title = models.CharField('Название рецепта', max_length=250)
-    description = models.TextField('Описание рецепта')
+        CustomUser, on_delete=models.CASCADE, related_name='recipes')
+    name = models.CharField('Название рецепта', max_length=250)
+    text = models.TextField('Описание рецепта')
     image = models.ImageField(
         upload_to='recipes/images/', null=True, default=None)
     date = models.DateField('Дата создания', auto_now_add=True)
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления мин.')
     ingredients = models.ManyToManyField(
-        Ingredient, through='IngredientRecipe')
-    tag = models.ManyToManyField(Tag)
+        Ingredient, through='IngredientRecipe', related_name='ingredient')
+    tags = models.ManyToManyField(Tag)
 
-    def __str__(self):
-        return self.title
+    def is_favorited(self, user):
+        return self.favorites.filter(user=user).exists()
+
+    def is_in_shopping_cart(self, user):
+        return self.shopping_carts.filter(user=user).exists()
 
 
 class IngredientRecipe(models.Model):
@@ -78,5 +85,6 @@ class IngredientRecipe(models.Model):
         Ingredient (ForeignKey): Ингредиент (связь с моделью Ingredient)
         recipe (ForeignKey): Рецепт (связь с моделью Recipe)
     """
-    Ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    amount = models.CharField(max_length=50)

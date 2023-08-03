@@ -1,5 +1,5 @@
 from django.contrib import admin
-from users.models import User
+from users.models import CustomUser
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -8,4 +8,4 @@ class UserAdmin(admin.ModelAdmin):
     list_editable = ('username', 'role',)
 
 
-admin.site.register(User, UserAdmin)
+admin.site.register(CustomUser, UserAdmin)

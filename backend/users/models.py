@@ -1,11 +1,12 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 
-class User(AbstractUser):
+class CustomUser(AbstractUser):
     class Role(models.TextChoices):
         USER = 'user', 'Пользователь'
-        GUEST = 'guest', 'Гсть'
+        GUEST = 'guest', 'Гость'
         ADMIN = 'admin', 'Администратор'
 
     first_name = models.CharField(max_length=150, blank=True)
@@ -28,8 +29,8 @@ class User(AbstractUser):
         return self.role == self.Role.USER
 
     @property
-    def is_moderator(self):
-        return self.role == self.Role.MODERATOR
+    def is_guest(self):
+        return self.role == self.Role.GUEST  # Use Role.ADMIN instead of Role.MODERATOR
 
     @property
     def is_admin(self):
@@ -39,3 +40,17 @@ class User(AbstractUser):
         if self.username == 'me':
             pass
         super().save(*args, **kwargs)
+
+
+class AuthorSubscription(models.Model):
+    subscriber = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscriptions')
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscribers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('subscriber', 'author')
+
+    def __str__(self):
+        return f"{self.subscriber} -> {self.author}"
