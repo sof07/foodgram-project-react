@@ -1,135 +1,97 @@
 from rest_framework import serializers
+import base64
 from .models import Recipe, Ingredient, Tag, IngredientRecipe
 from users.models import CustomUser
 from .validators import validate_email, validate_username
+import webcolors
+from django.contrib.auth import authenticate, get_user_model
+from rest_framework import serializers
+from django.core.files.base import ContentFile
+from djoser.serializers import UserSerializer
+from djoser.serializers import TokenCreateSerializer as DjoserTokenCreateSerializer
+from djoser.compat import get_user_email_field_name
+from djoser.conf import settings
+
+
+class Hex2NameColor(serializers.Field):
+    def to_representation(self, value):
+        return value
+
+    def to_internal_value(self, data):
+        try:
+            data = webcolors.hex_to_name(data)
+        except ValueError:
+            raise serializers.ValidationError('Для этого цвета нет имени')
+        return data
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
+        fields = ('id', 'name', 'measurement_unit')
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
         fields = '__all__'
 
 
-class UserSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для модели User.
-    Поля:
-    - username: CharField. Имя пользователя.
-    - email: EmailField. Email пользователя.
-    - first_name: CharField. Имя пользователя.
-    - last_name: CharField. Фамилия пользователя.
-    - bio: CharField. Биография пользователя.
-    - role: CharField. Роль пользователя.
-    Наследуется от:
-    - ModelSerializer. Сериализатор модели User.
-    Модель:
-    - User. Модель пользователя.
-    """
-    email = serializers.EmailField(required=True, validators=[
-        validate_email,
-    ])
-    username = serializers.SlugField(required=True, validators=[
-        validate_username,
-    ])
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
 
-    class Meta:
-        model = CustomUser
-        fields = ('email',
-                  'id',
-                  'username',
-                  'first_name',
-                  'last_name',
-                  # 'is_subscribed'
-                  )
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
 
-    def validate_role(self, value):
-        for key, val in CustomUser.Role.choices:
-            if value == key:
-                return value
-        raise serializers.ValidationError("Неверный тип пользователя.")
-
-    def validate_first_name(self, value):
-        if len(value) > 150:
-            raise serializers.ValidationError("first_name слишком длинное.")
-        return value
-
-    def validate_last_name(self, value):
-        if len(value) > 150:
-            raise serializers.ValidationError("last_name слишком длинное.")
-        return value
-
-    def validate(self, data):
-        email = data.get('email')
-        username = data.get('username')
-        if (CustomUser.objects.filter(username=username).exists()
-                and CustomUser.objects.get(username=username).email != email):
-            raise serializers.ValidationError(
-                "Пользователь и email не совпадают!"
-            )
-        if (CustomUser.objects.filter(email=email).exists()
-                and not CustomUser.objects.filter(username=username).exists()):
-            raise serializers.ValidationError(
-                "Данный email уже занят!"
-            )
-        return data
-
-
-class SpecialUserSerializer(UserSerializer):
-    """
-    Сериализатор для регистрации пользователя.
-    Наследуется от UserSerializer.
-    """
-    password = serializers.CharField(write_only=True)#Поле не отображается в ответе
-    class Meta:
-        model = CustomUser
-        fields = ('email',
-                  'id',
-                  'username',
-                  'first_name',
-                  'last_name',
-                  'password',)
-        read_only_fields = ('id',)
-
-class TagSerialaser(serializers.ModelSerializer):
-    class Meta:
-
-        model = Tag
-        fields = ('id',
-                  'name',
-                  'color',
-                  'slug')
+        return super().to_internal_value(data)
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
-    ingredient = IngredientSerializer()
-
     class Meta:
         model = IngredientRecipe
-        fields = ('amount', 'ingredient',)
+        fields = ('id', 'amount')
+
+
+class AuthorSerialaser(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed')
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request and request.user == obj:
+            return obj.has_subscriptions()
+        return None
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = IngredientSerializer(many=True, source='ingredient')
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    author = AuthorSerialaser()
+    ingredients = IngredientRecipeSerializer(many=True)
+    tags = TagSerializer(many=True)
 
     class Meta:
         model = Recipe
-        fields = ('id',  'tags', 'author', 'ingredients', 'name', 'image',
-                  'text', 'cooking_time', 'is_favorited', 'is_in_shopping_cart')
+        fields = ('ingredients', 'tags', 'author',
+                  'image', 'name', 'text', 'cooking_time')
 
-    def get_is_favorited(self, obj):
-        user = self.context['request'].user
-        return obj.is_favorited(user) if user.is_authenticated else False
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
 
-    def get_is_in_shopping_cart(self, obj):
-        user = self.context['request'].user
-        return obj.is_in_shopping_cart(user) if user.is_authenticated else False
+        recipe = Recipe.objects.create(**validated_data)
 
-    def get_ingredients(self, obj):
-        recipe_ingredients = IngredientRecipe.objects.filter(recipe=obj)
-        serializer = IngredientRecipeSerializer(recipe_ingredients, many=True)
-        return serializer.data
+        for ingredient_data in ingredients_data:
+            IngredientRecipe.objects.create(recipe=recipe, **ingredient_data)
+
+        for tag_data in tags_data:
+            recipe.tags.add(tag_data)
+
+        return recipe
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -139,3 +101,53 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'email', 'username', 'first_name',
                   'last_name', 'is_subscribed', 'recipes', 'recipes_count']
+
+
+class CustomTokenCreateSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        required=False, style={"input_type": "password"})
+
+    default_error_messages = {
+        "invalid_credentials": settings.CONSTANTS.messages.INVALID_CREDENTIALS_ERROR,
+        "inactive_account": settings.CONSTANTS.messages.INACTIVE_ACCOUNT_ERROR,
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = None
+
+        self.email_field = get_user_email_field_name(CustomUser)
+        self.fields[self.email_field] = serializers.EmailField()
+
+    def validate(self, attrs):
+        password = attrs.get("password")
+        email = attrs.get("email")
+        self.user = authenticate(
+            request=self.context.get("request"), email=email, password=password
+        )
+        if not self.user:
+            self.user = CustomUser.objects.filter(email=email).first()
+            if self.user and not self.user.check_password(password):
+                self.fail("invalid_credentials")
+        if self.user and self.user.is_active:
+            return attrs
+        self.fail("invalid_account")
+
+
+class CustomUserSerializer(UserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'is_subscribed')
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request and request.user == obj:
+            return obj.has_subscriptions()
+        return None
+
+
+class AuthorSubscriptionSerialaser(serializers.ModelSerializer):
+    class Mets:
+        fields = ('author')

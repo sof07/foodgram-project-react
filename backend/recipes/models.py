@@ -5,20 +5,7 @@ from autoslug import AutoSlugField
 
 
 class Ingredient(models.Model):
-    """
-    Ингредиент
-
-    Атрибуты:
-        title (str): Название ингредиента
-        quantity (Decimal): Количество ингредиента
-        unit_measurement (str): Единица измерения
-    Методы:
-        __str__(): Возвращает название ингредиента в виде строки
-    """
-
     name = models.CharField(max_length=250)
-    # amount = models.DecimalField(
-    #     'Количество', max_digits=10, decimal_places=2)
     measurement_unit = models.CharField('Единица измерения', max_length=100)
 
     def __str__(self):
@@ -69,7 +56,7 @@ class Recipe(models.Model):
         verbose_name='Время приготовления мин.')
     ingredients = models.ManyToManyField(
         Ingredient, through='IngredientRecipe', related_name='ingredient')
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, related_name='tags')
 
     def is_favorited(self, user):
         return self.favorites.filter(user=user).exists()

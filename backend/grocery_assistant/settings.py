@@ -30,8 +30,8 @@ INSTALLED_APPS = [
     'recipes.apps.RecipesConfig',
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework_simplejwt',
     'djoser',
+    'sorl.thumbnail',
     'autoslug',
     'django_extensions',
 ]
@@ -140,21 +140,23 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
-# SIMPLE_JWT = {
-#    'AUTH_HEADER_TYPES': ('JWT',),
-# }
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # User sign-up
 EMAIL_FROM = 'from@example.com'
 EMAIL_SUBJECT = 'Confirmation letter.'
 EMAIL_BODY = 'Confirmation code is {code}'
+
+# DJOSER = {
+#     'LOGIN_FIELD': 'email'
+# }
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DJOSER = {
     'SERIALIZERS': {
-        'user_create': 'recipes.serializers.SpecialUserSerializer',
+        'token_create': 'recipes.serializers.CustomTokenCreateSerializer',
+        'user': 'recipes.serializers.CustomUserSerializer',
+        'current_user': 'recipes.serializers.CustomUserSerializer',
         },
 }

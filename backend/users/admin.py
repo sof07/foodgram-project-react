@@ -1,11 +1,8 @@
 from django.contrib import admin
 from users.models import CustomUser
+class CustomUsersAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name')
+    search_fields = ('email', 'username')
 
 
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'username', 'email', 'first_name', 'role')
-    empty_value_display = '-пусто-'
-    list_editable = ('username', 'role',)
-
-
-admin.site.register(CustomUser, UserAdmin)
+admin.site.register(CustomUser, CustomUsersAdmin)

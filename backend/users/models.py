@@ -6,16 +6,12 @@ from django.conf import settings
 class CustomUser(AbstractUser):
     class Role(models.TextChoices):
         USER = 'user', 'Пользователь'
-        GUEST = 'guest', 'Гость'
         ADMIN = 'admin', 'Администратор'
 
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
-    email = models.EmailField(max_length=254)
     role = models.CharField(
         max_length=16, choices=Role.choices, default=Role.USER
     )
-    confirmation_code = models.CharField(max_length=50, blank=True, null=True)
+    REQUIRED_FIELDS =['email','first_name', 'last_name']
 
     class Meta:
         constraints = [
@@ -30,7 +26,7 @@ class CustomUser(AbstractUser):
 
     @property
     def is_guest(self):
-        return self.role == self.Role.GUEST  # Use Role.ADMIN instead of Role.MODERATOR
+        return self.role == self.Role.GUEST  
 
     @property
     def is_admin(self):
@@ -40,6 +36,8 @@ class CustomUser(AbstractUser):
         if self.username == 'me':
             pass
         super().save(*args, **kwargs)
+    def has_subscriptions(self):
+        return AuthorSubscription.objects.filter(subscriber=self).exists()
 
 
 class AuthorSubscription(models.Model):
