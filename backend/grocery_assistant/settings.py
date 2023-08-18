@@ -158,5 +158,18 @@ DJOSER = {
         'token_create': 'recipes.serializers.CustomTokenCreateSerializer',
         'user': 'recipes.serializers.CustomUserSerializer',
         'current_user': 'recipes.serializers.CustomUserSerializer',
+    },
+}
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
         },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',  # Set the desired logging level
+    },
 }

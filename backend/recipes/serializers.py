@@ -11,6 +11,9 @@ from djoser.serializers import UserSerializer
 from djoser.serializers import TokenCreateSerializer as DjoserTokenCreateSerializer
 from djoser.compat import get_user_email_field_name
 from djoser.conf import settings
+from .utils import base64_to_image, to_internal_value
+import logging
+from django.shortcuts import get_object_or_404
 
 
 class Hex2NameColor(serializers.Field):
@@ -35,6 +38,7 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = '__all__'
+        # read_only_fields = ['name', 'color', 'slug']
 
 
 class Base64ImageField(serializers.ImageField):
@@ -46,12 +50,66 @@ class Base64ImageField(serializers.ImageField):
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
 
         return super().to_internal_value(data)
+# class Base64ImageField(serializers.ImageField):
+#     """
+#     A Django REST framework field for handling image-uploads through raw post data.
+#     It uses base64 for encoding and decoding the contents of the file.
+
+#     Heavily based on
+#     https://github.com/tomchristie/django-rest-framework/pull/1268
+
+#     Updated for Django REST framework 3.
+#     """
+
+#     def to_internal_value(self, data):
+#         from django.core.files.base import ContentFile
+#         import base64
+#         import six
+#         import uuid
+
+#         # Check if this is a base64 string
+#         if isinstance(data, six.string_types):
+#             # Check if the base64 string is in the "data:" format
+#             if 'data:' in data and ';base64,' in data:
+#                 # Break out the header from the base64 content
+#                 header, data = data.split(';base64,')
+
+#             # Try to decode the file. Return validation error if it fails.
+#             try:
+#                 decoded_file = base64.b64decode(data)
+#             except TypeError:
+#                 self.fail('invalid_image')
+
+#             # Generate file name:
+#             # 12 characters are more than enough.
+#             file_name = str(uuid.uuid4())[:12]
+#             # Get the file name extension:
+#             file_extension = self.get_file_extension(file_name, decoded_file)
+
+#             complete_file_name = "%s.%s" % (file_name, file_extension, )
+
+#             data = ContentFile(decoded_file, name=complete_file_name)
+
+#         return super(Base64ImageField, self).to_internal_value(data)
+
+#     def get_file_extension(self, file_name, decoded_file):
+#         import imghdr
+
+#         extension = imghdr.what(file_name, decoded_file)
+#         extension = "jpg" if extension == "jpeg" else extension
+
+#         return extension
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='ingredient.id')
+    name = serializers.CharField(source='ingredient.name')
+    measurement_unit = serializers.CharField(
+        source='ingredient.measurement_unit')
+
     class Meta:
         model = IngredientRecipe
-        fields = ('id', 'amount')
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class AuthorSerialaser(serializers.ModelSerializer):
@@ -67,40 +125,6 @@ class AuthorSerialaser(serializers.ModelSerializer):
         if request and request.user == obj:
             return obj.has_subscriptions()
         return None
-
-
-class RecipeSerializer(serializers.ModelSerializer):
-    author = AuthorSerialaser()
-    ingredients = IngredientRecipeSerializer(many=True)
-    tags = TagSerializer(many=True)
-
-    class Meta:
-        model = Recipe
-        fields = ('ingredients', 'tags', 'author',
-                  'image', 'name', 'text', 'cooking_time')
-
-    def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags')
-
-        recipe = Recipe.objects.create(**validated_data)
-
-        for ingredient_data in ingredients_data:
-            IngredientRecipe.objects.create(recipe=recipe, **ingredient_data)
-
-        for tag_data in tags_data:
-            recipe.tags.add(tag_data)
-
-        return recipe
-
-
-class SubscriptionSerializer(serializers.ModelSerializer):
-    recipes = RecipeSerializer(many=True, source='author.recipes')
-
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'email', 'username', 'first_name',
-                  'last_name', 'is_subscribed', 'recipes', 'recipes_count']
 
 
 class CustomTokenCreateSerializer(serializers.Serializer):
@@ -134,20 +158,93 @@ class CustomTokenCreateSerializer(serializers.Serializer):
         self.fail("invalid_account")
 
 
-class CustomUserSerializer(UserSerializer):
+class CustomUserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
-    class Meta(UserSerializer.Meta):
+    class Meta:
+        model = CustomUser
         fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request and request.user == obj:
-            return obj.has_subscriptions()
-        return None
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return obj.subscribers.filter(subscriber=user).exists()
 
 
 class AuthorSubscriptionSerialaser(serializers.ModelSerializer):
     class Mets:
         fields = ('author')
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True)
+    author = CustomUserSerializer()
+    # Используем source для связанных ингредиентов
+    ingredients = IngredientRecipeSerializer(
+        source='recipe_ingredients', many=True)
+    is_favorited = serializers.BooleanField()
+    is_in_shopping_cart = serializers.BooleanField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id', 'tags', 'author', 'ingredients', 'is_favorited', 'is_in_shopping_cart',
+            'name', 'image', 'text', 'cooking_time'
+        )
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    recipes = RecipeSerializer(many=True, source='author.recipes')
+
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'email', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'recipes', 'recipes_count']
+
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    ingredients = serializers.ListField(child=serializers.DictField())
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all())
+    image = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = Recipe
+        fields = ('ingredients', 'tags', 'image',
+                  'name', 'text', 'cooking_time')
+
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+        image_data = validated_data.pop('image')
+
+        recipe = Recipe.objects.create(**validated_data)
+
+        for ingredient_data in ingredients_data:
+            IngredientRecipe.objects.create(
+                recipe=recipe,
+                ingredient_id=ingredient_data['id'],
+                amount=ingredient_data['amount']
+            )
+        recipe.tags.set(tags_data)
+        recipe.image = image_data
+
+        recipe.save()
+        print(recipe)
+        return recipe
+    # def create(self, validated_data):
+    #     tags = validated_data.pop('tags')
+    #     print(tags)
+    #     ingredients = validated_data.pop('ingredients')
+    #     recipe = Recipe.objects.create(**validated_data)
+    #     for tag in tags:
+    #         tag = Tag.objects.get(pk=tag)
+    #         recipe.tags.add(tag)
+    #     for ingredient in ingredients:
+    #         current_ingredient = get_object_or_404(
+    #             Ingredient, id=ingredient['id'])
+    #         IngredientRecipe.objects.create(
+    #             ingresient=current_ingredient, recipe=recipe, amount=ingredient['amount'])
