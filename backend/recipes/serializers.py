@@ -204,6 +204,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                   'last_name', 'is_subscribed', 'recipes', 'recipes_count']
 
 
+class RecipeIngridientsSerialaser(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ['id', 'amount']
+
+
 class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = serializers.ListField(child=serializers.DictField())
     tags = serializers.PrimaryKeyRelatedField(
@@ -233,7 +239,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         recipe.image = image_data
 
         recipe.save()
-        print(recipe)
         return recipe
     # def create(self, validated_data):
     #     tags = validated_data.pop('tags')

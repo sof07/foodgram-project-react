@@ -35,6 +35,9 @@ class Recipe(models.Model):
         Ingredient, through='IngredientRecipe', related_name='recipes')
     tags = models.ManyToManyField(Tag, related_name='recipes')
 
+    def __str__(self):
+        return self.text
+
     def is_favorited(self, user):
         return self.favorites.filter(user=user).exists()
 
