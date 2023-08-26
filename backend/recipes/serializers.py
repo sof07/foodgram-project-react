@@ -210,11 +210,29 @@ class RecipeIngridientsSerialaser(serializers.ModelSerializer):
         fields = ['id', 'amount']
 
 
+class RecipeCreateIngridientsSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all()
+    )
+    name = serializers.CharField(
+        read_only=True,
+        source='ingredient.name'
+    )
+
+    class Meta:
+        model = IngredientRecipe
+        fields = ['amount', 'id', 'name']
+
+
 class RecipeCreateSerializer(serializers.ModelSerializer):
-    ingredients = serializers.ListField(child=serializers.DictField())
+    ingredients = RecipeCreateIngridientsSerializer(
+        many=True,
+        source='recipe_ingredients'
+    )
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Tag.objects.all())
+        queryset=Tag.objects.all()
+    )
     image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
@@ -223,16 +241,18 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'name', 'text', 'cooking_time')
 
     def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
+        print('\n>>>', validated_data, '\n')
+        ingredients_data = validated_data.pop('recipe_ingredients')
         tags_data = validated_data.pop('tags')
         image_data = validated_data.pop('image')
 
         recipe = Recipe.objects.create(**validated_data)
 
         for ingredient_data in ingredients_data:
+            print('\n>>>', ingredient_data['id'].id, '\n')
             IngredientRecipe.objects.create(
                 recipe=recipe,
-                ingredient_id=ingredient_data['id'],
+                ingredient_id=ingredient_data['id'].id,
                 amount=ingredient_data['amount']
             )
         recipe.tags.set(tags_data)
