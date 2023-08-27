@@ -59,7 +59,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         # Проверяем, существует ли уже запись об избранном для этого рецепта
         if not Favorite.objects.filter(user=user, recipe=recipe).exists():
             Favorite.objects.create(user=user, recipe=recipe)
-            response_serializer = RecipeSerializer(recipe)
+            response_serializer = RecipeCreateSerializer(recipe)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -76,21 +76,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     # Переопределение create для обработки POST-запроса
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-    # def create(self, request, *args, **kwargs):
-    #     serializer = RecipeCreateSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         # Передача текущего авторизованного пользователя
-    #         serializer.save(author=request.user)
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def partial_update(self, request, *args, **kwargs):
-        serializer = RecipeCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            # Передача текущего авторизованного пользователя
-            serializer.save(author=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagViewset(viewsets.ReadOnlyModelViewSet):

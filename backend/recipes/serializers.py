@@ -229,7 +229,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     )
     image = Base64ImageField(required=False, allow_null=True)
     author = CustomUserSerializer(read_only=True)
-    # author = RecipeCreateCustomUserSerializer(read_only=True)
     is_favorited = serializers.BooleanField(read_only=True)
     is_in_shopping_cart = serializers.BooleanField(read_only=True)
 
@@ -239,25 +238,35 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'name', 'image', 'text', 'cooking_time')
 
     def create(self, validated_data):
-        print('\n>>>', validated_data, '\n')
         ingredients_data = validated_data.pop('recipe_ingredients')
-        print('\n>>>', ingredients_data, '\n')
         tags_data = validated_data.pop('tags')
-        print('\n>>>', tags_data, '\n')
-        # image_data = validated_data.pop('image')
 
         recipe = Recipe.objects.create(**validated_data)
-        print('\n>>>', recipe, '\n')
         for ingredient_data in ingredients_data:
-            print('\n>>>', ingredient_data['id'].id, '\n')
             IngredientRecipe.objects.create(
                 recipe=recipe,
                 ingredient_id=ingredient_data['id'].id,
                 amount=ingredient_data['amount']
             )
         recipe.tags.set(tags_data)
-        # recipe.image = image_data
 
+        recipe.save()
+        return recipe
+
+    def update(self, recipe, validated_data):
+        tags_data = validated_data.pop('tags')
+        ingredients_data = validated_data.pop('recipe_ingredients')
+        recipe.name = validated_data.get('name', recipe.name)
+        recipe.text = validated_data.get('text', recipe.text)
+        recipe.image = validated_data.get('image', recipe.image)
+        recipe.recipe_ingredients.all().delete()
+        for ingredient_data in ingredients_data:
+            IngredientRecipe.objects.create(recipe=recipe,
+                                            ingredient_id=ingredient_data['id'].id,
+                                            amount=ingredient_data['amount']
+                                            )
+
+        recipe.tags.set(tags_data)
         recipe.save()
         return recipe
 
