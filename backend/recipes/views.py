@@ -2,8 +2,7 @@ from rest_framework import (filters, permissions, viewsets)
 
 from .models import Recipe, Ingredient, Tag, ShoppingCart, Favorite
 from users.models import AuthorSubscription
-from .serializers import (RecipeSerializer,
-                          IngredientSerializer,
+from .serializers import (IngredientSerializer,
                           TagSerializer,
                           AuthorSubscriptionSerialaser,
                           RecipeCreateSerializer
@@ -12,7 +11,7 @@ from rest_framework.decorators import action
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework import status
-
+from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 
 
@@ -24,10 +23,11 @@ class IngredientViewset(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+    serializer_class = RecipeCreateSerializer
     permission_classes = (permissions.AllowAny,)
     filter_backends = (filters.OrderingFilter,)
     ordering_fields = ('name', 'cooking_time')
+    pagination_class = PageNumberPagination
 
     @action(detail=True, methods=['post'])
     def shopping_cart(self, request, pk=None):
@@ -74,14 +74,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
     #     return queryset
 
     # Переопределение create для обработки POST-запроса
-    def create(self, request, *args, **kwargs):
-        serializer = RecipeCreateSerializer(data=request.data)
-        print(serializer)
-        if serializer.is_valid():
-            # Передача текущего авторизованного пользователя
-            serializer.save(author=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+    # def create(self, request, *args, **kwargs):
+    #     serializer = RecipeCreateSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         # Передача текущего авторизованного пользователя
+    #         serializer.save(author=request.user)
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def partial_update(self, request, *args, **kwargs):
         serializer = RecipeCreateSerializer(data=request.data)
