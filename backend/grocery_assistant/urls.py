@@ -15,6 +15,7 @@ router.register(r'recipes', RecipeViewSet, basename='recipes')
 router.register(r'subscriptions', AuthorSubscriptionViewset,
                 basename='subscriptions')
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),

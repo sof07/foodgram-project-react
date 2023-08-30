@@ -5,7 +5,9 @@ from users.models import AuthorSubscription
 from .serializers import (IngredientSerializer,
                           TagSerializer,
                           AuthorSubscriptionSerialaser,
-                          RecipeCreateSerializer
+                          RecipeCreateSerializer,
+                          FavoriteRecipeSerializer,
+                          RecipeFavoriteSerializer
                           )
 from rest_framework.decorators import action
 from rest_framework import viewsets, permissions
@@ -51,19 +53,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post', 'delete'])
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
+        if request.method == 'POST':
 
-        # Проверяем, существует ли уже запись об избранном для этого рецепта
-        if not Favorite.objects.filter(user=user, recipe=recipe).exists():
-            Favorite.objects.create(user=user, recipe=recipe)
-            response_serializer = RecipeCreateSerializer(recipe)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
+            # Проверяем, существует ли уже запись об избранном для этого рецепта
+            if not Favorite.objects.filter(user=user, recipe=recipe).exists():
+                Favorite.objects.create(user=user, recipe=recipe)
+                response_serializer = RecipeFavoriteSerializer(recipe)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'errors': 'Рецепт уже в избранном'}, status=status.HTTP_400_BAD_REQUEST)
+        elif request.method == 'DELETE':
+            Favorite.objects.filter(user=user, recipe=recipe).delete()
+            return Response()
     # Переопределение get_queryset для учёта авторства и состояния избранного/корзины
     # def get_queryset(self):
     #     queryset = Recipe.objects.all()
@@ -86,3 +91,8 @@ class TagViewset(viewsets.ReadOnlyModelViewSet):
 class AuthorSubscriptionViewset(viewsets.ModelViewSet):
     queryset = AuthorSubscription.objects.all()
     serializer_class = AuthorSubscriptionSerialaser
+
+
+class FavoriteViewset(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = FavoriteRecipeSerializer

@@ -1,19 +1,14 @@
 from rest_framework import serializers
 import base64
-from .models import Recipe, Ingredient, Tag, IngredientRecipe
+from .models import Recipe, Ingredient, Tag, IngredientRecipe, Favorite
 from users.models import CustomUser
-from .validators import validate_email, validate_username
 import webcolors
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import authenticate
 from rest_framework import serializers
 from django.core.files.base import ContentFile
-from djoser.serializers import UserSerializer
 from djoser.serializers import TokenCreateSerializer as DjoserTokenCreateSerializer
 from djoser.compat import get_user_email_field_name
 from djoser.conf import settings
-from .utils import base64_to_image, to_internal_value
-import logging
-from django.shortcuts import get_object_or_404
 
 
 class Hex2NameColor(serializers.Field):
@@ -195,10 +190,11 @@ class AuthorSubscriptionSerialaser(serializers.ModelSerializer):
 #         )
 
 
-class RecipeIngridientsSerialaser(serializers.ModelSerializer):
+class RecipeFavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ['id', 'amount']
+        model = Recipe
+        fields = ['id', 'name', 'image', 'cooking_time']
 
 
 class RecipeCreateIngridientsSerializer(serializers.ModelSerializer):
@@ -279,3 +275,25 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'email', 'username', 'first_name',
                   'last_name', 'is_subscribed', 'recipes', 'recipes_count']
+
+
+class FavoriteRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Recipe.objects.all()
+    )
+    name = serializers.CharField(
+        read_only=True,
+        source='recipe.name'
+    )
+    image = serializers.CharField(
+        read_only=True,
+        source='recipe.name'
+    )
+    cooking_time = serializers.CharField(
+        read_only=True,
+        source='recipe.name'
+    )
+
+    class Meta:
+        model = Favorite
+        fields = ['id', 'name', 'image', 'cooking_time']
