@@ -1,5 +1,5 @@
 from rest_framework import (filters, permissions, viewsets)
-
+from collections import defaultdict
 from .models import Recipe, Ingredient, Tag, ShoppingCart, Favorite
 from users.models import AuthorSubscription
 from .serializers import (IngredientSerializer,
@@ -15,6 +15,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
+import csv
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
@@ -31,6 +32,34 @@ class RecipeViewSet(viewsets.ModelViewSet):
     ordering_fields = ('name', 'cooking_time')
     pagination_class = PageNumberPagination
 
+    @action(detail=False, methods=['get'], url_path='download_shopping_cart')
+    def download_shopping_cart(self, request):
+        # Сделать имя файла имяпользователя_список_покупок
+        # вынести создание файла в отдельную функцию
+        # удалить файл после отправки пользователю###
+        shopping_cart_entries = ShoppingCart.objects.filter(user=request.user)
+        ingredient_totals = defaultdict(float)
+
+        for entry in shopping_cart_entries:
+            recipe = entry.recipe
+            recipe_ingredients = recipe.recipe_ingredients.all()
+
+            for ingredient_entry in recipe_ingredients:
+                ingredient = ingredient_entry.ingredient
+                amount_per_serving = ingredient_entry.amount
+                total_amount = float(amount_per_serving)
+                ingredient_totals[ingredient] += total_amount
+        with open('profiles1.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+
+            for ingredient, total_amount in ingredient_totals.items():
+                print(
+                    f'{ingredient.name.capitalize()} {total_amount} {ingredient.measurement_unit}')
+                writer.writerow(
+                    [f'{ingredient.name.capitalize()}, {total_amount}, {ingredient.measurement_unit}'])
+
+        return Response(status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=['post'])
     def shopping_cart(self, request, pk=None):
         try:
@@ -42,7 +71,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         shopping_cart_item, created = ShoppingCart.objects.get_or_create(
             user=user, recipe=recipe
         )
-
         if created:
             return Response({
                 'id': recipe.id,
@@ -51,7 +79,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 'cooking_time': recipe.cooking_time
             }, status=status.HTTP_201_CREATED)
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    'errors': 'Рецепт уже в списке покупок'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=True, methods=['post', 'delete'])
     def favorite(self, request, pk=None):
@@ -65,7 +98,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 response_serializer = RecipeFavoriteSerializer(recipe)
                 return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             else:
-                return Response({'errors': 'Рецепт уже в избранном'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {
+                        'errors': 'Рецепт уже в избранном'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         elif request.method == 'DELETE':
             Favorite.objects.filter(user=user, recipe=recipe).delete()
             return Response()

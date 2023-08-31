@@ -11,7 +11,7 @@ router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet, basename='recipes')
 router.register(r'tags', TagViewset, basename='tags')
 router.register(r'ingredients', IngredientViewset, basename='ingredients')
-router.register(r'recipes', RecipeViewSet, basename='recipes')
+# router.register(r'recipes', RecipeViewSet, basename='recipes')
 router.register(r'subscriptions', AuthorSubscriptionViewset,
                 basename='subscriptions')
 
