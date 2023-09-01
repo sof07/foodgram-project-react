@@ -2,6 +2,7 @@
 import base64
 from django.core.files.base import ContentFile
 from PIL import Image
+from collections import defaultdict
 
 
 def base64_to_image(data):
@@ -50,3 +51,32 @@ def get_file_extension(self, file_name, decoded_file):
     extension = "jpg" if extension == "jpeg" else extension
 
     return extension
+
+
+def generate_shopping_cart_csv(user):
+    shopping_cart_entries = ShoppingCart.objects.filter(user=user)
+    ingredient_totals = defaultdict(float)
+
+    for entry in shopping_cart_entries:
+        recipe = entry.recipe
+        recipe_ingredients = recipe.recipe_ingredients.all()
+
+        for ingredient_entry in recipe_ingredients:
+            ingredient = ingredient_entry.ingredient
+            amount_per_serving = ingredient_entry.amount
+            total_amount = float(amount_per_serving)
+            ingredient_totals[ingredient] += total_amount
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="shopping_cart.csv"'
+
+    writer = csv.writer(response)
+
+    for ingredient, total_amount in ingredient_totals.items():
+        writer.writerow([
+            ingredient.name.capitalize(),
+            total_amount,
+            ingredient.measurement_unit
+        ])
+
+    return response
