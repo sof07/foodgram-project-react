@@ -18,6 +18,7 @@ services:
     # Файл (или список файлов) с переменными окружения
     env_file: .env
     # Какой volume подключить для этого контейнера
+    # command: python manage.py migrate #&& python csv_loader.py
     volumes:
       - pg_data:/var/lib/postgresql/data
   # Имя и описание контейнера с бэкендом

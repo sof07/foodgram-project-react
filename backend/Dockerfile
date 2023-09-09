@@ -20,6 +20,6 @@ RUN pip install -r requirements.txt --no-cache-dir
 # той директории локального компьютера, где сохранён Dockerfile,
 # в текущую рабочую директорию образа — /app.
 COPY . .
-
+# RUN python manage.py csv_loader.py
 # При старте контейнера запустить сервер разработки.
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "grocery_assistant.wsgi"] 
