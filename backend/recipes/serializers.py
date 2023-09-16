@@ -107,19 +107,19 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-class AuthorSerialaser(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+# class AuthorSerialaser(serializers.ModelSerializer):
+#     is_subscribed = serializers.SerializerMethodField()
 
-    class Meta:
-        model = CustomUser
-        fields = ('email', 'id', 'username', 'first_name',
-                  'last_name', 'is_subscribed')
+#     class Meta:
+#         model = CustomUser
+#         fields = ('email', 'id', 'username', 'first_name',
+#                   'last_name', 'is_subscribed')
 
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request and request.user == obj:
-            return obj.has_subscriptions()
-        return None
+#     def get_is_subscribed(self, obj):
+#         request = self.context.get('request')
+#         if request and request.user == obj:
+#             return obj.has_subscriptions()
+#         return None
 
 
 class CustomTokenCreateSerializer(serializers.Serializer):
@@ -158,7 +158,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'username', 'first_name',
+        fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed')
 
     def get_is_subscribed(self, obj):

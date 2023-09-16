@@ -22,5 +22,6 @@ def load_data_from_csv(csv_file_path):
 
 
 if __name__ == "__main__":
-    csv_file_path = os.path.join("..", "data", "ingredients.csv")
+    # csv_file_path = os.path.join("..", "data", "ingredients.csv")
+    csv_file_path = os.path.join("data", "ingredients.csv")
     load_data_from_csv(csv_file_path)

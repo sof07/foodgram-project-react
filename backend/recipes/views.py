@@ -16,6 +16,7 @@ from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 import csv
+from rest_framework.pagination import LimitOffsetPagination
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
@@ -30,7 +31,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.AllowAny,)
     filter_backends = (filters.OrderingFilter,)
     ordering_fields = ('name', 'cooking_time')
-    pagination_class = PageNumberPagination
+    pagination_class = LimitOffsetPagination
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
@@ -124,6 +125,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class TagViewset(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class AuthorSubscriptionViewset(viewsets.ModelViewSet):
