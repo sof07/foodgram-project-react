@@ -1,13 +1,15 @@
 from rest_framework import (filters, permissions, viewsets)
 from collections import defaultdict
 from .models import Recipe, Ingredient, Tag, ShoppingCart, Favorite
-from users.models import AuthorSubscription
+from users.models import AuthorSubscription, CustomUser
 from .serializers import (IngredientSerializer,
                           TagSerializer,
-                          AuthorSubscriptionSerialaser,
                           RecipeCreateSerializer,
                           FavoriteRecipeSerializer,
-                          RecipeFavoriteSerializer
+                          RecipeFavoriteSerializer,
+                          CustomUserSerializer,
+                          AuthorSubscriptionSerializer,
+                          FavoriteUserSerializer
                           )
 from rest_framework.decorators import action
 from rest_framework import viewsets, permissions
@@ -17,6 +19,10 @@ from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 import csv
 from rest_framework.pagination import LimitOffsetPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet as DjoserUserViewSet
+
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
@@ -32,6 +38,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.OrderingFilter,)
     ordering_fields = ('name', 'cooking_time')
     pagination_class = LimitOffsetPagination
+    filter_backends = (DjangoFilterBackend,) # Фильтрация
+    filterset_fields = (
+                        'author',
+                        'tags') #Поля для фильтрации
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
@@ -128,10 +138,42 @@ class TagViewset(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class AuthorSubscriptionViewset(viewsets.ModelViewSet):
-    queryset = AuthorSubscription.objects.all()
-    serializer_class = AuthorSubscriptionSerialaser
+class CustomUserViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    # pagination_class = None
 
+    @action(detail=True, methods=['post', 'delete'], url_path='subscribe')
+    def subscribe(self, request, pk=None):
+
+        user_to_subscribe = self.get_object()
+        subscriber = self.request.user
+
+        
+        if request.method == 'POST':
+            if user_to_subscribe == subscriber:
+                return Response({"detail": "Вы не можете подписаться на себя."}, status=status.HTTP_400_BAD_REQUEST)
+
+            subscription, created = AuthorSubscription.objects.get_or_create(
+                subscriber=subscriber, author=user_to_subscribe)
+
+            if created:
+                
+                response_serializer = FavoriteUserSerializer(user_to_subscribe, context={'request': request})
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"detail": "Вы уже подписаны на этого пользователя."}, status=status.HTTP_200_OK)
+        elif request.method == 'DELETE':
+            user_to_unsubscribe = self.get_object()
+            subscriber = self.request.user
+
+            try:
+                subscription = AuthorSubscription.objects.get(
+                    subscriber=subscriber, author=user_to_unsubscribe)
+                subscription.delete()
+                return Response({"detail": "Вы успешно отписались от этого пользователя."}, status=status.HTTP_204_NO_CONTENT)
+            except AuthorSubscription.DoesNotExist:
+                return Response({"detail": "Вы не были подписаны на этого пользователя."}, status=status.HTTP_400_BAD_REQUEST)
 
 class FavoriteViewset(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()

@@ -1,5 +1,5 @@
 from recipes.views import (RecipeViewSet,
-                           TagViewset, IngredientViewset, AuthorSubscriptionViewset)
+                           TagViewset, IngredientViewset, CustomUserViewSet)
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
@@ -11,9 +11,9 @@ router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet, basename='recipes')
 router.register(r'tags', TagViewset, basename='tags')
 router.register(r'ingredients', IngredientViewset, basename='ingredients')
-# router.register(r'recipes', RecipeViewSet, basename='recipes')
-router.register(r'subscriptions', AuthorSubscriptionViewset,
-                basename='subscriptions')
+router.register(r'users', CustomUserViewSet, basename='users')
+
+
 
 
 urlpatterns = [
@@ -22,6 +22,12 @@ urlpatterns = [
     path('api/', include('djoser.urls')),
     # Работа с пользователями
     re_path(r'api/auth/', include('djoser.urls.authtoken')),
+    # re_path(r'api/users/(?P<pk>\d+)/subscribe/$', 
+    #         CustomUserViewSet.as_view({
+    #             'post': 'subscribe', 
+    #             'delete': 'unsubscribe', 
+    #             'get': 'subscriptions'})),
+    
 ]
 if settings.DEBUG:
     urlpatterns += static(

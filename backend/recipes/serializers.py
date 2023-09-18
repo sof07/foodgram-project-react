@@ -1,7 +1,7 @@
 from rest_framework import serializers
 import base64
 from .models import Recipe, Ingredient, Tag, IngredientRecipe, Favorite
-from users.models import CustomUser
+from users.models import CustomUser, AuthorSubscription
 import webcolors
 from django.contrib.auth import authenticate
 from rest_framework import serializers
@@ -33,7 +33,7 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = '__all__'
-        # read_only_fields = ['name', 'color', 'slug']
+        read_only_fields = ['name', 'color', 'slug']
 
 
 class Base64ImageField(serializers.ImageField):
@@ -153,14 +153,70 @@ class CustomTokenCreateSerializer(serializers.Serializer):
         self.fail("invalid_account")
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+# class FollowingSerializer(serializers.ModelSerializer):
 
+#     class Meta:
+#         model = AuthorSubscription
+#         fields = ('id', 'subscriber')
+
+# class FollowersSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = AuthorSubscription
+#         fields = ('id', 'author')
+class RecipeFavoriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ['id', 'name', 'image', 'cooking_time']        
+class CustomUserSerializer(serializers.ModelSerializer):
+    # это поле для чтения, связанное с определённым методом,
+    # в котором будет вычислено значение этого поля.
+    is_subscribed = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed')
 
+    """
+    Давайте разберем его подробнее:
+
+        obj в этом контексте представляет собой объект модели, 
+        который вы пытаетесь сериализовать или получить информацию о нем. 
+        В вашем случае, это, возможно, объект Author (или другой объект, 
+        который имеет связь с AuthorSubscription).
+
+        subscribers и subscriber - это связи, определенные в модели AuthorSubscription:
+
+        subscriber - это внешний ключ (ForeignKey) к модели пользователя 
+        (settings.AUTH_USER_MODEL), который указывает на пользователя, 
+        который подписывается на другого пользователя.
+
+        subscribers - это внешний ключ (ForeignKey) к модели пользователя 
+        (settings.AUTH_USER_MODEL), который указывает на пользователя, 
+        на которого подписываются.
+
+        obj.subscribers - это обращение к связанному менеджеру, 
+        который предоставляется Django для отношений, созданных с 
+        использованием ForeignKey. Он позволяет получить доступ ко всем записям, 
+        связанным с obj через поле subscribers в модели AuthorSubscription.
+
+        .filter(subscriber=user) - это метод фильтрации, который выполняет 
+        фильтрацию записей в таблице AuthorSubscription. Мы хотим найти все записи, 
+        где поле subscriber (то есть, пользователь, который подписывается) 
+        равно user (текущий пользователь).
+
+        .exists() - это метод, который вызывается после .filter(). 
+        Он возвращает булево значение True, если хотя бы одна запись 
+        соответствует фильтру, и False, если нет. В данном случае, 
+        мы используем .exists(), чтобы проверить, существует ли хотя бы одна запись, 
+        где текущий пользователь (user) подписан на объект, представленный obj.
+
+        Итак, obj.subscribers.filter(subscriber=user).exists() позволяет вам проверить, 
+        существует ли запись в таблице AuthorSubscription, в которой текущий 
+        пользователь (user) подписан на объект, представленный obj. Если такая запись 
+        существует, метод вернет True, что может использоваться, например, для 
+        определения, подписан ли пользователь на автора.
+    """
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
@@ -168,9 +224,22 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return obj.subscribers.filter(subscriber=user).exists()
 
 
-class AuthorSubscriptionSerialaser(serializers.ModelSerializer):
-    class Mets:
-        fields = ('author')
+class FavoriteUserSerializer(serializers.ModelSerializer):
+    # это поле для чтения, связанное с определённым методом,
+    # в котором будет вычислено значение этого поля.
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = RecipeFavoriteSerializer(many=True)
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'recipes')
+
+
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return obj.subscribers.filter(subscriber=user).exists()        
 
 
 # class RecipeSerializer(serializers.ModelSerializer):
@@ -190,11 +259,7 @@ class AuthorSubscriptionSerialaser(serializers.ModelSerializer):
 #         )
 
 
-class RecipeFavoriteSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = Recipe
-        fields = ['id', 'name', 'image', 'cooking_time']
 
 
 class RecipeCreateIngridientsSerializer(serializers.ModelSerializer):
@@ -265,16 +330,21 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         recipe.tags.set(tags_data)
         recipe.save()
         return recipe
+    # Для получения тэга в нужном виде
+    def to_representation(self, instance):
 
+        data = super().to_representation(instance)
+        tags_data = TagSerializer(instance.tags.all(), many=True).data
+        data['tags'] = tags_data
 
-class SubscriptionSerializer(serializers.ModelSerializer):
-    recipes = RecipeCreateIngridientsSerializer(
-        many=True, source='author.recipes')
+        return data
 
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'email', 'username', 'first_name',
-                  'last_name', 'is_subscribed', 'recipes', 'recipes_count']
+# class AuthorSubscriptionSerializer(serializers.ModelSerializer):
+#     # author = CustomUserSerializer(read_only=True)
+
+#     class Meta:
+#         model = AuthorSubscription
+#         fields = ('username',)
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):
@@ -297,3 +367,5 @@ class FavoriteRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = ['id', 'name', 'image', 'cooking_time']
+
+
