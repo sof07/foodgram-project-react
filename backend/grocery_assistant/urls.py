@@ -20,13 +20,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/', include('djoser.urls')),
-    # Работа с пользователями
     re_path(r'api/auth/', include('djoser.urls.authtoken')),
-    # re_path(r'api/users/(?P<pk>\d+)/subscribe/$', 
-    #         CustomUserViewSet.as_view({
-    #             'post': 'subscribe', 
-    #             'delete': 'unsubscribe', 
-    #             'get': 'subscriptions'})),
+
     
 ]
 if settings.DEBUG:
