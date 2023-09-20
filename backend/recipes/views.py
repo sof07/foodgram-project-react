@@ -20,7 +20,7 @@ import csv
 from rest_framework.pagination import LimitOffsetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from djoser.views import UserViewSet as DjoserUserViewSet
+from djoser.views import UserViewSet
 from django.http import FileResponse
 import os
 
@@ -145,7 +145,7 @@ class TagViewset(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class CustomUserViewSet(viewsets.ModelViewSet):
+class CustomUserViewSet(UserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 

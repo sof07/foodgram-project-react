@@ -130,7 +130,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('email', 'id', 'username', 'first_name',
-                  'last_name', 'is_subscribed')
+                  'last_name', 'password', 'is_subscribed')
+        extra_kwargs = {'password': {'write_only': True}}
 
     """
     Давайте разберем его подробнее:
