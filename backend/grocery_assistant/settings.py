@@ -138,9 +138,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny'
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 5,
+    'PAGE_SIZE': 6,
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
@@ -158,11 +157,13 @@ EMAIL_BODY = 'Confirmation code is {code}'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DJOSER = {
+    'HIDE_USERS': False,
     'SERIALIZERS': {
         'token_create': 'recipes.serializers.CustomTokenCreateSerializer',
-        'user': 'recipes.serializers.CustomUserSerializer',
-        'current_user': 'recipes.serializers.CustomUserSerializer',
     },
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.AllowAny'],
+    }
 }
 LOGGING = {
     'version': 1,

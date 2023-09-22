@@ -20,9 +20,11 @@ import csv
 from rest_framework.pagination import LimitOffsetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+# from djoser.views import UserViewSet
 from djoser.views import UserViewSet
 from django.http import FileResponse
 import os
+from .permissions import IsAuthorOrReadOnly
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
@@ -36,18 +38,23 @@ class IngredientViewset(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeCreateSerializer
-    permission_classes = (permissions.AllowAny,)
-    filter_backends = (filters.OrderingFilter,)
-    ordering_fields = ('name', 'tags')
+    permission_classes = (IsAuthorOrReadOnly,)
+    # filter_backends = (filters.OrderingFilter,)
+    # ordering_fields = ('name', 'tags')
     pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)  # Фильтрация
     filterset_fields = (
         'author',
-        'tags')  # Поля для фильтрации
+        'tags__slug')  # Поля для фильтрации
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
+        # Сделать имя файла имяпользователя_список_покупок
+        # вынести создание файла в отдельную функцию
+        # удалить файл после отправки пользователю###
 
+        # Получил список всех игридиентов для покупки
+        # отфильтровав по юзеру отправившему запрос
         shopping_cart_entries = ShoppingCart.objects.filter(user=request.user)
         # Создал словарь
         ingredient_totals = defaultdict(float)
@@ -55,7 +62,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         for entry in shopping_cart_entries:
             recipe = entry.recipe
             print(recipe)
-
+            # Из рецептов получаю ингридиенты связаные с рецептом
+            # по related_name recipe_ingredients
             recipe_ingredients = recipe.recipe_ingredients.all()
 
             for ingredient_entry in recipe_ingredients:
@@ -64,6 +72,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 amount_per_serving = ingredient_entry.amount
                 total_amount = float(amount_per_serving)
                 ingredient_totals[ingredient] += total_amount
+
+        # Код демонстрирует, как создать и отправить файл динамически из
+        # вьюсета в Django REST framework (DRF). Вот объяснение кода:
+
+        # generate_and_send_file - это метод, который будет выполнен,
+        # когда произойдет GET-запрос на /generate_and_send_file/.
+        # Внутри этого метода мы создаем файл и отправляем его как ответ на запрос.
+
+        # file_name - это имя файла, которое будет отображаться у
+        # пользователя при скачивании. Мы используем имя "dynamic_file.txt" в этом примере.
+
+        # Мы создаем временный файл с именем dynamic_file.txt и записываем
+        # в него содержимое file_content.
+
+        # FileResponse - это класс DRF, который создает HTTP-ответ, содержащий файл.
+        # Мы открываем созданный временный файл и передаем его в FileResponse.
+        # Опция as_attachment=True указывает браузеру рассматривать этот файл как вложение,
+        # что позволяет пользователю скачать его.
+
+        # Мы устанавливаем заголовок Content-Disposition, чтобы указать имя файла при скачивании.
+
+        # В комментарии также есть код для удаления временного файла, если это необходимо,
+        # чтобы избежать накопления неиспользуемых файлов. Это может быть полезно,
+        # если создаваемые файлы временные и больше не нужны после отправки.
 
         file_name = 'ingredients_list.csv'
         with open(file_name, 'w', newline='') as file:
@@ -158,9 +190,8 @@ class CustomUserViewSet(UserViewSet):
             subscribers, many=True, context={'request': request})
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
-    def get_queryset(self):
-        # Возвращаем все объекты CustomUser
-        return CustomUser.objects.all()
+    # def get_queryset(self):
+    #     return CustomUser.objects.all()
 
 
 class FavoriteViewset(viewsets.ModelViewSet):
