@@ -8,7 +8,7 @@ from .serializers import (IngredientSerializer,
                           FavoriteRecipeSerializer,
                           RecipeFavoriteSerializer,
                           CustomUserSerializer,
-                          FavoriteUserSerializer
+                          SubscribeUserSerializer
                           )
 from rest_framework.decorators import action
 from rest_framework import viewsets, permissions
@@ -28,7 +28,9 @@ import os
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    search_fields = ('name',)
+    pagination_class = None
+    filter_backends = (filters.SearchFilter, )
+    search_fields = ('^name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -36,7 +38,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeCreateSerializer
     permission_classes = (permissions.AllowAny,)
     filter_backends = (filters.OrderingFilter,)
-    ordering_fields = ('name', 'cooking_time')
+    ordering_fields = ('name', 'tags')
     pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)  # Фильтрация
     filterset_fields = (
@@ -45,12 +47,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
-        # Сделать имя файла имяпользователя_список_покупок
-        # вынести создание файла в отдельную функцию
-        # удалить файл после отправки пользователю###
 
-        # Получил список всех игридиентов для покупки
-        # отфильтровав по юзеру отправившему запрос
         shopping_cart_entries = ShoppingCart.objects.filter(user=request.user)
         # Создал словарь
         ingredient_totals = defaultdict(float)
@@ -58,8 +55,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         for entry in shopping_cart_entries:
             recipe = entry.recipe
             print(recipe)
-            # Из рецептов получаю ингридиенты связаные с рецептом
-            # по related_name recipe_ingredients
+
             recipe_ingredients = recipe.recipe_ingredients.all()
 
             for ingredient_entry in recipe_ingredients:
@@ -68,30 +64,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 amount_per_serving = ingredient_entry.amount
                 total_amount = float(amount_per_serving)
                 ingredient_totals[ingredient] += total_amount
-
-        # Код демонстрирует, как создать и отправить файл динамически из
-        # вьюсета в Django REST framework (DRF). Вот объяснение кода:
-
-        # generate_and_send_file - это метод, который будет выполнен,
-        # когда произойдет GET-запрос на /generate_and_send_file/.
-        # Внутри этого метода мы создаем файл и отправляем его как ответ на запрос.
-
-        # file_name - это имя файла, которое будет отображаться у
-        # пользователя при скачивании. Мы используем имя "dynamic_file.txt" в этом примере.
-
-        # Мы создаем временный файл с именем dynamic_file.txt и записываем
-        # в него содержимое file_content.
-
-        # FileResponse - это класс DRF, который создает HTTP-ответ, содержащий файл.
-        # Мы открываем созданный временный файл и передаем его в FileResponse.
-        # Опция as_attachment=True указывает браузеру рассматривать этот файл как вложение,
-        # что позволяет пользователю скачать его.
-
-        # Мы устанавливаем заголовок Content-Disposition, чтобы указать имя файла при скачивании.
-
-        # В комментарии также есть код для удаления временного файла, если это необходимо,
-        # чтобы избежать накопления неиспользуемых файлов. Это может быть полезно,
-        # если создаваемые файлы временные и больше не нужны после отправки.
 
         file_name = 'ingredients_list.csv'
         with open(file_name, 'w', newline='') as file:
@@ -126,6 +98,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Favorite.objects.filter(user=user, recipe=recipe).delete()
             return Response()
     # Переопределение get_queryset для учёта авторства и состояния избранного/корзины
+
     # def get_queryset(self):
     #     queryset = Recipe.objects.all()
     #     user = self.request.user
@@ -151,20 +124,15 @@ class CustomUserViewSet(UserViewSet):
 
     @action(detail=True, methods=['post', 'delete'], url_path='subscribe')
     def subscribe(self, request, pk=None):
-
         user_to_subscribe = self.get_object()
         subscriber = self.request.user
-
         if request.method == 'POST':
             if user_to_subscribe == subscriber:
                 return Response({"detail": "Вы не можете подписаться на себя."}, status=status.HTTP_400_BAD_REQUEST)
-
             subscription, created = AuthorSubscription.objects.get_or_create(
                 subscriber=subscriber, author=user_to_subscribe)
-
             if created:
-
-                response_serializer = FavoriteUserSerializer(
+                response_serializer = SubscribeUserSerializer(
                     user_to_subscribe, context={'request': request})
                 return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             else:
@@ -172,7 +140,6 @@ class CustomUserViewSet(UserViewSet):
         elif request.method == 'DELETE':
             user_to_unsubscribe = self.get_object()
             subscriber = self.request.user
-
             try:
                 subscription = AuthorSubscription.objects.get(
                     subscriber=subscriber, author=user_to_unsubscribe)
@@ -187,9 +154,13 @@ class CustomUserViewSet(UserViewSet):
         user = self.request.user  # Получаем текущего пользователя
         # здесь по релайтед наме получаем всех подписчиков
         subscribers = user.subscribers.all()
-        response_serializer = FavoriteUserSerializer(
+        response_serializer = SubscribeUserSerializer(
             subscribers, many=True, context={'request': request})
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    def get_queryset(self):
+        # Возвращаем все объекты CustomUser
+        return CustomUser.objects.all()
 
 
 class FavoriteViewset(viewsets.ModelViewSet):

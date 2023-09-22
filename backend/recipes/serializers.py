@@ -123,8 +123,7 @@ class RecipeFavoriteSerializer(serializers.ModelSerializer):
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    # это поле для чтения, связанное с определённым методом,
-    # в котором будет вычислено значение этого поля.
+
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -133,47 +132,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
                   'last_name', 'password', 'is_subscribed')
         extra_kwargs = {'password': {'write_only': True}}
 
-    """
-    Давайте разберем его подробнее:
-
-        obj в этом контексте представляет собой объект модели, 
-        который вы пытаетесь сериализовать или получить информацию о нем. 
-        В вашем случае, это, возможно, объект Author (или другой объект, 
-        который имеет связь с AuthorSubscription).
-
-        subscribers и subscriber - это связи, определенные в модели AuthorSubscription:
-
-        subscriber - это внешний ключ (ForeignKey) к модели пользователя 
-        (settings.AUTH_USER_MODEL), который указывает на пользователя, 
-        который подписывается на другого пользователя.
-
-        subscribers - это внешний ключ (ForeignKey) к модели пользователя 
-        (settings.AUTH_USER_MODEL), который указывает на пользователя, 
-        на которого подписываются.
-
-        obj.subscribers - это обращение к связанному менеджеру, 
-        который предоставляется Django для отношений, созданных с 
-        использованием ForeignKey. Он позволяет получить доступ ко всем записям, 
-        связанным с obj через поле subscribers в модели AuthorSubscription.
-
-        .filter(subscriber=user) - это метод фильтрации, который выполняет 
-        фильтрацию записей в таблице AuthorSubscription. Мы хотим найти все записи, 
-        где поле subscriber (то есть, пользователь, который подписывается) 
-        равно user (текущий пользователь).
-
-        .exists() - это метод, который вызывается после .filter(). 
-        Он возвращает булево значение True, если хотя бы одна запись 
-        соответствует фильтру, и False, если нет. В данном случае, 
-        мы используем .exists(), чтобы проверить, существует ли хотя бы одна запись, 
-        где текущий пользователь (user) подписан на объект, представленный obj.
-
-        Итак, obj.subscribers.filter(subscriber=user).exists() позволяет вам проверить, 
-        существует ли запись в таблице AuthorSubscription, в которой текущий 
-        пользователь (user) подписан на объект, представленный obj. Если такая запись 
-        существует, метод вернет True, что может использоваться, например, для 
-        определения, подписан ли пользователь на автора.
-    """
-
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
@@ -181,9 +139,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return obj.subscribers.filter(subscriber=user).exists()
 
 
-class FavoriteUserSerializer(serializers.ModelSerializer):
-    # это поле для чтения, связанное с определённым методом,
-    # в котором будет вычислено значение этого поля.
+class SubscribeUserSerializer(serializers.ModelSerializer):
+
     is_subscribed = serializers.SerializerMethodField()
     recipes = RecipeFavoriteSerializer(many=True)
     recipes_count = serializers.SerializerMethodField()
