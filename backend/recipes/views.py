@@ -38,7 +38,7 @@ class IngredientViewset(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeCreateSerializer
-    permission_classes = (IsAuthorOrReadOnly,)
+    # permission_classes = (IsAuthorOrReadOnly,)
     # filter_backends = (filters.OrderingFilter,)
     # ordering_fields = ('name', 'tags')
     pagination_class = LimitOffsetPagination
@@ -115,6 +115,28 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
 
             # Проверяем, существует ли уже запись об избранном для этого рецепта
+            if not ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+                ShoppingCart.objects.create(user=user, recipe=recipe)
+                response_serializer = RecipeFavoriteSerializer(recipe)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(
+                    {
+                        'errors': 'Рецепт уже в списке покупок'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        elif request.method == 'DELETE':
+            ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
+            return Response()
+
+    @action(detail=True, methods=['post', 'delete'], url_name='favorite')
+    def favorite(self, request, pk=None):
+        recipe = self.get_object()
+        user = request.user
+        if request.method == 'POST':
+
+            # Проверяем, существует ли уже запись об избранном для этого рецепта
             if not Favorite.objects.filter(user=user, recipe=recipe).exists():
                 Favorite.objects.create(user=user, recipe=recipe)
                 response_serializer = RecipeFavoriteSerializer(recipe)
@@ -153,6 +175,7 @@ class TagViewset(viewsets.ReadOnlyModelViewSet):
 class CustomUserViewSet(UserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+    lookup_field = 'pk'
 
     @action(detail=True, methods=['post', 'delete'], url_path='subscribe')
     def subscribe(self, request, pk=None):

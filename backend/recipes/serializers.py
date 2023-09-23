@@ -249,8 +249,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     )
     image = Base64ImageField(required=False, allow_null=True)
     author = CustomUserSerializer(read_only=True)
-    is_favorited = serializers.BooleanField(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(read_only=True)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -296,8 +296,20 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         tags_data = TagSerializer(instance.tags.all(), many=True).data
         data['tags'] = tags_data
-
         return data
+
+    def get_is_favorited(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return obj.favorites.filter(user=user).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return obj.shopping_cart.filter(user=user).exists()
+
 
 # class AuthorSubscriptionSerializer(serializers.ModelSerializer):
 #     # author = CustomUserSerializer(read_only=True)
