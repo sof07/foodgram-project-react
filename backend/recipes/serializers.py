@@ -197,6 +197,7 @@ class SubscribeUserSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         if user.is_anonymous:
             return False
+
         return obj.subscribers.filter(subscriber=user).exists()
 
     def get_recipes_count(self, obj):

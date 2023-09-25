@@ -10,21 +10,19 @@ from .serializers import (IngredientSerializer,
                           CustomUserSerializer,
                           SubscribeUserSerializer
                           )
-from rest_framework.decorators import action
-from rest_framework import viewsets, permissions
+from rest_framework.decorators import action, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 import csv
-from rest_framework.pagination import LimitOffsetPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
 # from djoser.views import UserViewSet
 from djoser.views import UserViewSet
 from django.http import FileResponse
 import os
 from .permissions import IsAuthorOrReadOnly
+from .filters import RecipeFilter
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
@@ -38,14 +36,14 @@ class IngredientViewset(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeCreateSerializer
-    # permission_classes = (IsAuthorOrReadOnly,)
-    # filter_backends = (filters.OrderingFilter,)
-    # ordering_fields = ('name', 'tags')
-    pagination_class = LimitOffsetPagination
-    filter_backends = (DjangoFilterBackend,)  # Фильтрация
-    filterset_fields = (
-        'author',
-        'tags__slug')  # Поля для фильтрации
+    permission_classes = (IsAuthorOrReadOnly,)
+    filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
+    ordering_fields = ('date')
+    pagination_class = PageNumberPagination
+    # filterset_fields = (
+    #     'author',
+    #     'tags__slug')
+    filterset_class = RecipeFilter  # Поля для фильтрации
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
@@ -61,7 +59,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         # Для каждого элемента в списке покупок получаю рецепты
         for entry in shopping_cart_entries:
             recipe = entry.recipe
-            print(recipe)
             # Из рецептов получаю ингридиенты связаные с рецептом
             # по related_name recipe_ingredients
             recipe_ingredients = recipe.recipe_ingredients.all()
@@ -128,9 +125,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
         elif request.method == 'DELETE':
             ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
-            return Response()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete'], url_name='favorite')
+    @action(detail=True,
+            methods=['post', 'delete'],
+            url_name='favorite',
+            permission_classes=[permissions.IsAuthenticated])
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
@@ -150,16 +150,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
         elif request.method == 'DELETE':
             Favorite.objects.filter(user=user, recipe=recipe).delete()
-            return Response()
+            return Response(status=status.HTTP_204_NO_CONTENT)
     # Переопределение get_queryset для учёта авторства и состояния избранного/корзины
-
-    # def get_queryset(self):
-    #     queryset = Recipe.objects.all()
-    #     user = self.request.user
-    #     if user.is_authenticated:
-    #         queryset = queryset.annotate_is_favorited(
-    #             user).annotate_is_in_shopping_cart(user)
-    #     return queryset
 
     # Переопределение create для обработки POST-запроса
     def perform_create(self, serializer):
@@ -206,15 +198,20 @@ class CustomUserViewSet(UserViewSet):
 
     @action(detail=False, methods=['get'], url_path='subscriptions')
     def subscriptions(self, request):
-        user = self.request.user  # Получаем текущего пользователя
-        # здесь по релайтед наме получаем всех подписчиков
-        subscribers = user.subscribers.all()
-        response_serializer = SubscribeUserSerializer(
-            subscribers, many=True, context={'request': request})
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
+        user = self.request.user
+        subscribed_authors = AuthorSubscription.objects.filter(
+            subscriber=user).values('author')
+        subscribed_users = CustomUser.objects.filter(pk__in=subscribed_authors)
 
-    # def get_queryset(self):
-    #     return CustomUser.objects.all()
+        # Применение пагинации
+        paginator = PageNumberPagination()
+        result_page = paginator.paginate_queryset(subscribed_users, request)
+
+        response_serializer = SubscribeUserSerializer(
+            result_page, many=True, context={'request': request})
+
+        # Включение метаданных о пагинации в ответе
+        return paginator.get_paginated_response(response_serializer.data)
 
 
 class FavoriteViewset(viewsets.ModelViewSet):

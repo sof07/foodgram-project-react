@@ -151,9 +151,6 @@ EMAIL_FROM = 'from@example.com'
 EMAIL_SUBJECT = 'Confirmation letter.'
 EMAIL_BODY = 'Confirmation code is {code}'
 
-# DJOSER = {
-#     'LOGIN_FIELD': 'email'
-# }
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DJOSER = {
