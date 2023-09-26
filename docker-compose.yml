@@ -7,6 +7,7 @@ version: '3'
 volumes:
   pg_data:
   static:
+  media:
 
 # Перечень контейнеров
 services:
@@ -28,6 +29,7 @@ services:
     env_file: .env
     volumes:
       - static:/backend_static
+      - media:/media
     # Какие контейнеры нужно запустить до старта этого контейнера:
     depends_on:
       - db
@@ -44,6 +46,7 @@ services:
     build: ./gateway/
     volumes:
       - static:/staticfiles/
+      - media:/media
     # Ключ ports устанавливает
     # перенаправление всех запросов с порта 8000 хоста
     # на порт 80 контейнера.

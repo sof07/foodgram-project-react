@@ -40,9 +40,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     ordering_fields = ('date')
     pagination_class = PageNumberPagination
-    # filterset_fields = (
-    #     'author',
-    #     'tags__slug')
     filterset_class = RecipeFilter  # Поля для фильтрации
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
@@ -105,7 +102,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         os.remove(file_name)
         return response
 
-    @action(detail=True, methods=['post', 'delete'], url_path='shopping_cart')
+    @action(detail=True,
+            methods=['post', 'delete'],
+            url_path='shopping_cart',
+            permission_classes=[permissions.IsAuthenticated]
+            )
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
@@ -130,7 +131,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True,
             methods=['post', 'delete'],
             url_name='favorite',
-            permission_classes=[permissions.IsAuthenticated])
+            permission_classes=[permissions.IsAuthenticated]
+            )
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
