@@ -1,27 +1,25 @@
-from rest_framework import (filters, permissions, viewsets)
-from collections import defaultdict
-from .models import Recipe, Ingredient, Tag, ShoppingCart, Favorite
-from users.models import AuthorSubscription, CustomUser
-from .serializers import (IngredientSerializer,
-                          TagSerializer,
-                          RecipeCreateSerializer,
-                          FavoriteRecipeSerializer,
-                          RecipeFavoriteSerializer,
-                          CustomUserSerializer,
-                          SubscribeUserSerializer
-                          )
-from rest_framework.decorators import action, permission_classes
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.pagination import PageNumberPagination
-from django.conf import settings
 import csv
+import os
+from collections import defaultdict
+
+from django.conf import settings
+from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from django.http import FileResponse
-import os
-from .permissions import IsAuthorOrReadOnly
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import action, permission_classes
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+
+from users.models import AuthorSubscription, CustomUser
+
 from .filters import RecipeFilter
+from .models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from .permissions import IsAuthorOrReadOnly
+from .serializers import (CustomUserSerializer, FavoriteRecipeSerializer,
+                          IngredientSerializer, RecipeCreateSerializer,
+                          RecipeFavoriteSerializer, SubscribeUserSerializer,
+                          TagSerializer)
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):

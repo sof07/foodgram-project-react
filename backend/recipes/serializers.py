@@ -1,15 +1,18 @@
-from rest_framework import serializers
 import base64
-from .models import Recipe, Ingredient, Tag, IngredientRecipe, Favorite
-from users.models import CustomUser, AuthorSubscription
+
 import webcolors
 from django.contrib.auth import authenticate
-from rest_framework import serializers
 from django.core.files.base import ContentFile
-from djoser.serializers import TokenCreateSerializer as DjoserTokenCreateSerializer
+from django.db.models import Count
 from djoser.compat import get_user_email_field_name
 from djoser.conf import settings
-from django.db.models import Count
+from djoser.serializers import \
+    TokenCreateSerializer as DjoserTokenCreateSerializer
+from rest_framework import serializers
+
+from users.models import AuthorSubscription, CustomUser
+
+from .models import Favorite, Ingredient, IngredientRecipe, Recipe, Tag
 
 
 class Hex2NameColor(serializers.Field):

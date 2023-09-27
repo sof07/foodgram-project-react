@@ -1,8 +1,9 @@
 
 import base64
+from collections import defaultdict
+
 from django.core.files.base import ContentFile
 from PIL import Image
-from collections import defaultdict
 
 
 def base64_to_image(data):
@@ -13,10 +14,11 @@ def base64_to_image(data):
 
 
 def to_internal_value(self, data):
-    from django.core.files.base import ContentFile
     import base64
-    import six
     import uuid
+
+    import six
+    from django.core.files.base import ContentFile
 
     # Check if this is a base64 string
     if isinstance(data, six.string_types):

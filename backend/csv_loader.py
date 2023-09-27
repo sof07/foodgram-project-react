@@ -1,12 +1,15 @@
 import os
+
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE",
                       "grocery_assistant.settings")
 django.setup()
+import csv
+
 from recipes.models import Ingredient
 from users.models import CustomUser
-import csv
+
 
 def load_data_from_csv(csv_file_path):
     with open(csv_file_path, encoding='utf-8') as csv_file:
