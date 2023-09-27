@@ -17,7 +17,6 @@ from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 import csv
 from django_filters.rest_framework import DjangoFilterBackend
-# from djoser.views import UserViewSet
 from djoser.views import UserViewSet
 from django.http import FileResponse
 import os

@@ -59,21 +59,6 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-# class AuthorSerialaser(serializers.ModelSerializer):
-#     is_subscribed = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = CustomUser
-#         fields = ('email', 'id', 'username', 'first_name',
-#                   'last_name', 'is_subscribed')
-
-#     def get_is_subscribed(self, obj):
-#         request = self.context.get('request')
-#         if request and request.user == obj:
-#             return obj.has_subscriptions()
-#         return None
-
-
 class CustomTokenCreateSerializer(serializers.Serializer):
     password = serializers.CharField(
         required=False, style={"input_type": "password"})
@@ -105,16 +90,6 @@ class CustomTokenCreateSerializer(serializers.Serializer):
         self.fail("invalid_account")
 
 
-# class FollowingSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = AuthorSubscription
-#         fields = ('id', 'subscriber')
-
-# class FollowersSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = AuthorSubscription
-#         fields = ('id', 'author')
 class RecipeFavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -205,23 +180,6 @@ class SubscribeUserSerializer(serializers.ModelSerializer):
         return recipe_count["id__count"]
 
 
-# class RecipeSerializer(serializers.ModelSerializer):
-#     tags = TagSerializer(many=True)
-#     author = CustomUserSerializer()
-#     # Используем source для связанных ингредиентов
-#     ingredients = IngredientRecipeSerializer(
-#         source='recipe_ingredients', many=True)
-#     is_favorited = serializers.BooleanField()
-#     is_in_shopping_cart = serializers.BooleanField()
-
-#     class Meta:
-#         model = Recipe
-#         fields = (
-#             'id', 'tags', 'author', 'ingredients', 'is_favorited', 'is_in_shopping_cart',
-#             'name', 'image', 'text', 'cooking_time'
-#         )
-
-
 class RecipeCreateIngridientsSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all()
@@ -310,14 +268,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         if user.is_anonymous:
             return False
         return obj.shopping_cart.filter(user=user).exists()
-
-
-# class AuthorSubscriptionSerializer(serializers.ModelSerializer):
-#     # author = CustomUserSerializer(read_only=True)
-
-#     class Meta:
-#         model = AuthorSubscription
-#         fields = ('username',)
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):

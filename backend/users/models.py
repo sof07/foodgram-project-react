@@ -9,17 +9,28 @@ class CustomUser(AbstractUser):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=('username', 'email', ),
+                fields=('username', 'email',),
                 name='user'
             )]
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ['email', 'username']
 
 
 class AuthorSubscription(models.Model):
     subscriber = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscriptions')
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='subscriptions'
+    )
     author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscribers')
-    created_at = models.DateTimeField(auto_now_add=True)
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='subscribers'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания')
 
     class Meta:
         unique_together = ('subscriber', 'author')
