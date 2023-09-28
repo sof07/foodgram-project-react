@@ -65,8 +65,10 @@ class CustomTokenCreateSerializer(serializers.Serializer):
         required=False, style={"input_type": "password"})
 
     default_error_messages = {
-        "invalid_credentials": settings.CONSTANTS.messages.INVALID_CREDENTIALS_ERROR,
-        "inactive_account": settings.CONSTANTS.messages.INACTIVE_ACCOUNT_ERROR,
+        "invalid_credentials":
+        settings.CONSTANTS.messages.INVALID_CREDENTIALS_ERROR,
+        "inactive_account":
+        settings.CONSTANTS.messages.INACTIVE_ACCOUNT_ERROR,
     }
 
     def __init__(self, *args, **kwargs):
@@ -169,8 +171,17 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited', 'is_in_shopping_cart',
-                  'name', 'image', 'text', 'cooking_time')
+        fields = ('id',
+                  'tags',
+                  'author',
+                  'ingredients',
+                  'is_favorited',
+                  'is_in_shopping_cart',
+                  'name',
+                  'image',
+                  'text',
+                  'cooking_time'
+                  )
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('recipe_ingredients')
@@ -196,10 +207,11 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         recipe.image = validated_data.get('image', recipe.image)
         recipe.recipe_ingredients.all().delete()
         for ingredient_data in ingredients_data:
-            IngredientRecipe.objects.create(recipe=recipe,
-                                            ingredient_id=ingredient_data['id'].id,
-                                            amount=ingredient_data['amount']
-                                            )
+            IngredientRecipe.objects.create(
+                recipe=recipe,
+                ingredient_id=ingredient_data['id'].id,
+                amount=ingredient_data['amount']
+            )
 
         recipe.tags.set(tags_data)
         recipe.save()

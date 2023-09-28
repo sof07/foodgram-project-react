@@ -77,8 +77,10 @@ class Recipe(models.Model):
         verbose_name='Дата создания',
         auto_now_add=True
     )
-    cooking_time = models.PositiveIntegerField(
-        verbose_name='Время приготовления мин.')
+    cooking_time = (
+        models.PositiveIntegerField(
+            verbose_name='Время приготовления мин.')
+    )
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientRecipe',
@@ -108,7 +110,10 @@ class Recipe(models.Model):
 
 class IngredientRecipe(models.Model):
     ingredient = models.ForeignKey(
-        Ingredient, on_delete=models.CASCADE, related_name='recipe_ingredients')
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients'
+    )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,

@@ -2,12 +2,11 @@ import csv
 import os
 from collections import defaultdict
 
-from django.conf import settings
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import filters, permissions, status, viewsets
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -59,7 +58,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             writer = csv.writer(file)
             for ingredient, total_amount in ingredient_totals.items():
                 writer.writerow(
-                    [f'{ingredient.name.capitalize()}, {total_amount}, {ingredient.measurement_unit}'])
+                    [f'{ingredient.name.capitalize()}, {total_amount}, \
+                     {ingredient.measurement_unit}']
+                )
         response = FileResponse(open(file_name, 'rb'), as_attachment=True)
         response['Content-Disposition'] = f'attachment; filename="{file_name}"'
         os.remove(file_name)
@@ -75,10 +76,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'POST':
 
-            if not ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+            if not ShoppingCart.objects.filter(user=user, recipe=recipe).\
+                    exists():
                 ShoppingCart.objects.create(user=user, recipe=recipe)
                 response_serializer = RecipeFavoriteSerializer(recipe)
-                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+                return Response(
+                    response_serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
             else:
                 return Response(
                     {
@@ -103,7 +108,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if not Favorite.objects.filter(user=user, recipe=recipe).exists():
                 Favorite.objects.create(user=user, recipe=recipe)
                 response_serializer = RecipeFavoriteSerializer(recipe)
-                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+                return Response(
+                    response_serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
             else:
                 return Response(
                     {
@@ -136,15 +144,24 @@ class CustomUserViewSet(UserViewSet):
         subscriber = self.request.user
         if request.method == 'POST':
             if user_to_subscribe == subscriber:
-                return Response({"detail": "Вы не можете подписаться на себя."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Вы не можете подписаться на себя."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             subscription, created = AuthorSubscription.objects.get_or_create(
                 subscriber=subscriber, author=user_to_subscribe)
             if created:
                 response_serializer = SubscribeUserSerializer(
                     user_to_subscribe, context={'request': request})
-                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+                return Response(
+                    response_serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
             else:
-                return Response({"detail": "Вы уже подписаны на этого пользователя."}, status=status.HTTP_200_OK)
+                return Response(
+                    {"detail": "Вы уже подписаны на этого пользователя."},
+                    status=status.HTTP_200_OK
+                )
         elif request.method == 'DELETE':
             user_to_unsubscribe = self.get_object()
             subscriber = self.request.user
@@ -152,10 +169,15 @@ class CustomUserViewSet(UserViewSet):
                 subscription = AuthorSubscription.objects.get(
                     subscriber=subscriber, author=user_to_unsubscribe)
                 subscription.delete()
-                return Response({"detail": "Вы успешно отписались от этого пользователя."}, status=status.HTTP_204_NO_CONTENT)
+                return Response(
+                    {"detail": "Вы успешно отписались от этого пользователя."},
+                    status=status.HTTP_204_NO_CONTENT
+                )
             except AuthorSubscription.DoesNotExist:
-                return Response({"detail":
-                                 "Вы не были подписаны на этого пользователя."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Вы не были подписаны на этого пользователя."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
     @action(detail=False, methods=['get'], url_path='subscriptions')
     def subscriptions(self, request):
