@@ -15,7 +15,7 @@ SECRET_KEY = '%zxtgft^6^nk3zdonq5*er+1l6(g(@2vf*wqbc_f#&k@+-+27i'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['84.252.137.104', '127.0.0.1', 'localhost', 'sof07.ddns.net']
 
 
 # Application definition
