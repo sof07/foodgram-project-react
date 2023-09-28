@@ -8,6 +8,7 @@ on:
   push:
     # Отслеживаем изменения только в ветке main
     branches:
+      - master
       - main
 # Перечень задач
 jobs:
