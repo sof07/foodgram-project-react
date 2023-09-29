@@ -157,9 +157,6 @@ DJOSER = {
     'SERIALIZERS': {
         'token_create': 'recipes.serializers.CustomTokenCreateSerializer',
     },
-    # 'PERMISSIONS': {
-    #     'user': ['rest_framework.permissions.AllowAny'],
-    # }
 }
 LOGGING = {
     'version': 1,
