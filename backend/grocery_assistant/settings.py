@@ -1,17 +1,21 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('TOKEN', default="23GG")
 
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = '%zxtgft^6^nk3zdonq5*er+1l6(g(@2vf*wqbc_f#&k@+-+27i'
+
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = ['84.252.137.104', '127.0.0.1', 'localhost', 'sof07.ddns.net']
 
 
 # Application definition
@@ -153,10 +157,9 @@ DJOSER = {
     'SERIALIZERS': {
         'token_create': 'recipes.serializers.CustomTokenCreateSerializer',
     },
-    'PERMISSIONS': {
-        'user': ['rest_framework.permissions.AllowAny'],
-        'user_list': ['rest_framework.permissions.AllowAny']
-    }
+    # 'PERMISSIONS': {
+    #     'user': ['rest_framework.permissions.AllowAny'],
+    # }
 }
 LOGGING = {
     'version': 1,
