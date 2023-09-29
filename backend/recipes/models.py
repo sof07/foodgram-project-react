@@ -3,7 +3,6 @@ from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 from unidecode import unidecode
-
 from users.models import CustomUser
 
 
