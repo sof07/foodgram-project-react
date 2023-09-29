@@ -7,10 +7,10 @@ from django.db.models import Count
 from djoser.compat import get_user_email_field_name
 from djoser.conf import settings
 from rest_framework import serializers
+
 from users.models import CustomUser
 
 from .models import Favorite, Ingredient, IngredientRecipe, Recipe, Tag
-from .utils import subscribers_favorites_shopping_cart
 
 
 class Hex2NameColor(serializers.Field):
@@ -110,10 +110,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def get_is_subscribed(self, obj):
-        return subscribers_favorites_shopping_cart(
-            self=self,
-            obj=obj,
-            qs='subscribers')
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return obj.subscribers.filter(subscriber=user).exists()
 
 
 class SubscribeUserSerializer(serializers.ModelSerializer):
