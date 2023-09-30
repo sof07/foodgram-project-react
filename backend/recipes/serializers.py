@@ -7,6 +7,7 @@ from django.db.models import Count
 from djoser.compat import get_user_email_field_name
 from djoser.conf import settings
 from rest_framework import serializers
+
 from users.models import CustomUser
 
 from .models import Favorite, Ingredient, IngredientRecipe, Recipe, Tag
