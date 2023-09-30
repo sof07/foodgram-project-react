@@ -137,7 +137,11 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = CustomUserSerializer
     lookup_field = 'pk'
 
-    @action(detail=True, methods=['post', 'delete'], url_path='subscribe')
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        url_path='subscribe',
+        permission_classes=[permissions.IsAuthenticated])
     def subscribe(self, request, pk=None):
         user_to_subscribe = self.get_object()
         subscriber = self.request.user
