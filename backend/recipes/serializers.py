@@ -182,6 +182,12 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'cooking_time'
                   )
 
+    def validate(self, data):
+        if data['cooking_time'] < 5:
+            raise serializers.ValidationError(
+                'Время приготовления не может быть меньше 5 минут')
+        return data
+
     def create(self, validated_data):
         ingredients_data = validated_data.pop('recipe_ingredients')
         tags_data = validated_data.pop('tags')
