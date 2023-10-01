@@ -10,6 +10,7 @@ from rest_framework import serializers
 from users.models import CustomUser
 
 from .models import Favorite, Ingredient, IngredientRecipe, Recipe, Tag
+from .validators import validate_ingredients, validate_tags
 
 
 class Hex2NameColor(serializers.Field):
@@ -163,7 +164,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
-    image = Base64ImageField(required=False, allow_null=True)
+    image = Base64ImageField(allow_null=True)
     author = CustomUserSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -182,10 +183,12 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'cooking_time'
                   )
 
-    def validate(self, data):
-        if data['cooking_time'] < 5:
-            raise serializers.ValidationError(
-                'Время приготовления не может быть меньше 5 минут')
+    def validate_tags(self, data):
+        validate_tags(self, data)
+        return data
+
+    def validate_ingredients(self, data):
+        validate_ingredients(self, data)
         return data
 
     def create(self, validated_data):

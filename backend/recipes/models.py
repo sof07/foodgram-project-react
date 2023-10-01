@@ -1,5 +1,6 @@
 from autoslug import AutoSlugField
 from django.conf import settings
+from django.core import validators
 from django.db import models
 from django.utils.text import slugify
 from unidecode import unidecode
@@ -78,7 +79,13 @@ class Recipe(models.Model):
     )
     cooking_time = (
         models.PositiveIntegerField(
-            verbose_name='Время приготовления мин.')
+            verbose_name='Время приготовления мин.',
+            validators=[
+                validators.MinValueValidator(
+                    1,
+                    message='Время приготовлениене может быть меньше 1 минуты'
+                )]
+        )
     )
     ingredients = models.ManyToManyField(
         Ingredient,
@@ -118,7 +125,15 @@ class IngredientRecipe(models.Model):
         on_delete=models.CASCADE,
         related_name='recipe_ingredients'
     )
-    amount = models.CharField(max_length=50)
+    amount = models.PositiveIntegerField(
+        validators=[
+            validators.MinValueValidator(
+                1,
+                message='Количество ингредиента не может быть меньше 1'
+            )
+        ],
+        default=1
+    )
 
 
 class Favorite(models.Model):
