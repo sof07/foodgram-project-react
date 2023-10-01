@@ -145,7 +145,7 @@ EMAIL_BODY = 'Confirmation code is {code}'
 
 MEDIA_URL = '/media/'
 # ПОМЕНЯТЬ ЗДЕСЬ media на '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, '/media/')
 DJOSER = {
     'HIDE_USERS': False,
     'SERIALIZERS': {
