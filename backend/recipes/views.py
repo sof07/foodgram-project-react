@@ -7,7 +7,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import (LimitOffsetPagination,
+                                       PageNumberPagination)
 from rest_framework.response import Response
 from users.models import AuthorSubscription, CustomUser
 
@@ -34,7 +35,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     ordering_fields = ('date')
-    pagination_class = PageNumberPagination
+    pagination_class = LimitOffsetPagination
     filterset_class = RecipeFilter  # Поля для фильтрации
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
@@ -71,10 +72,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[permissions.IsAuthenticated]
             )
     def shopping_cart(self, request, pk=None):
-        recipe = self.get_object()
+        try:
+            recipe = Recipe.objects.get(pk=pk)
+
+        except Recipe.DoesNotExist:
+            return Response(
+                {
+                    'errors': 'Рецепт не существует'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
         user = request.user
         if request.method == 'POST':
-
             if not ShoppingCart.objects.filter(user=user, recipe=recipe).\
                     exists():
                 ShoppingCart.objects.create(user=user, recipe=recipe)
@@ -100,10 +109,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[permissions.IsAuthenticated]
             )
     def favorite(self, request, pk=None):
-        recipe = self.get_object()
+        try:
+            recipe = Recipe.objects.get(pk=pk)
+
+        except Recipe.DoesNotExist:
+            return Response(
+                {
+                    'errors': 'Рецепт не существует'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         user = request.user
         if request.method == 'POST':
 
+            print(self.get_object())
             if not Favorite.objects.filter(user=user, recipe=recipe).exists():
                 Favorite.objects.create(user=user, recipe=recipe)
                 response_serializer = RecipeFavoriteSerializer(recipe)
@@ -163,7 +183,7 @@ class CustomUserViewSet(UserViewSet):
             else:
                 return Response(
                     {"detail": "Вы уже подписаны на этого пользователя."},
-                    status=status.HTTP_200_OK
+                    status=status.HTTP_403_FORBIDDEN
                 )
         elif request.method == 'DELETE':
             user_to_unsubscribe = self.get_object()

@@ -2,8 +2,19 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from .validators import validate_reserved_username
+
 
 class CustomUser(AbstractUser):
+    email = models.EmailField(('email address'), unique=True, blank=False)
+    first_name = models.CharField(('first name'), max_length=150, blank=False)
+    last_name = models.CharField(('last name'), max_length=150, blank=False)
+    username = models.CharField(
+        ('username'),
+        max_length=150,
+        unique=True,
+        validators=[validate_reserved_username]
+    )
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
 
     class Meta:

@@ -6,8 +6,9 @@ from django.core.files.base import ContentFile
 from django.db.models import Count
 from djoser.compat import get_user_email_field_name
 from djoser.conf import settings
+from djoser.serializers import UserSerializer
 from rest_framework import serializers
-from users.models import CustomUser
+from users.models import AuthorSubscription, CustomUser
 
 from .models import Favorite, Ingredient, IngredientRecipe, Recipe, Tag
 from .validators import validate_ingredients, validate_tags
@@ -100,20 +101,28 @@ class RecipeFavoriteSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'image', 'cooking_time']
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'password', 'is_subscribed')
-        extra_kwargs = {'password': {'write_only': True}}
+        extra_kwargs = {
+            'password': {'write_only': True},
+            # 'email': {'required': True},
+            # 'username': {'required': True},
+            # 'id': {'required': True},
+            # 'first_name': {'required': True},
+            # 'last_name': {'required': True}
+        }
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
             return False
-        return obj.subscribers.filter(subscriber=user).exists()
+        return AuthorSubscription.objects.filter(subscriber=user,
+                                                 author=obj).exists()
 
 
 class SubscribeUserSerializer(serializers.ModelSerializer):
