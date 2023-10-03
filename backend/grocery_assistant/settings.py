@@ -147,6 +147,7 @@ DJOSER = {
     'HIDE_USERS': False,
     'SERIALIZERS': {
         'token_create': 'recipes.serializers.CustomTokenCreateSerializer',
+        'current_user': 'recipes.serializers.CustomUserSerializer',
     },
     'PERMISSIONS': {
         'user': ['rest_framework.permissions.AllowAny'],

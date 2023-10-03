@@ -14,12 +14,12 @@ from users.models import AuthorSubscription, CustomUser
 
 from .filters import RecipeFilter
 from .models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from .paginators import CustomPagination
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (CustomUserSerializer, FavoriteRecipeSerializer,
                           IngredientSerializer, RecipeCreateSerializer,
                           RecipeFavoriteSerializer, SubscribeUserSerializer,
                           TagSerializer)
-from .paginators import CustomPagination
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
@@ -47,7 +47,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     filterset_class = RecipeFilter  # Поля для фильтрации
 
-    @action(detail=False, methods=['get'], url_path='download_shopping_cart')
+    @action(detail=False,
+            methods=['get'],
+            url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
 
         shopping_cart_entries = ShoppingCart.objects.filter(user=request.user)
@@ -77,8 +79,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True,
             methods=['post', 'delete'],
-            url_path='shopping_cart',
-            )
+            url_path='shopping_cart',)
     def shopping_cart(self, request, pk=None):
         try:
             recipe = Recipe.objects.get(pk=pk)
@@ -90,26 +91,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         user = request.user
         if request.method == 'POST':
-            if not ShoppingCart.objects.filter(user=user, recipe=recipe).\
-                    exists():
-                ShoppingCart.objects.create(user=user, recipe=recipe)
-                response_serializer = RecipeFavoriteSerializer(recipe)
-                return Response(
-                    response_serializer.data,
-                    status=status.HTTP_201_CREATED
-                )
+            if user.is_authenticated:
+                if not ShoppingCart.objects.filter(user=user, recipe=recipe).\
+                        exists():
+                    ShoppingCart.objects.create(user=user, recipe=recipe)
+                    response_serializer = RecipeFavoriteSerializer(recipe)
+                    return Response(
+                        response_serializer.data,
+                        status=status.HTTP_201_CREATED
+                    )
+                else:
+                    return Response(
+                        {
+                            'errors': 'Запрос от анонимного пользователя'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             else:
-                return Response(
-                    {
-                        'errors': 'Рецепт уже в списке покупок'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response(status=status.HTTP_400_BAD_REQUEST)
         elif request.method == 'DELETE':
-            ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            if user.is_authenticated:
+                ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True,
             methods=['post', 'delete'],
@@ -123,7 +131,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         except Recipe.DoesNotExist:
             return Response(
                 {
-                    'errors': 'Рецепт не существует'
+                    'errors': 'Запрос от анонимного пользователя'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
