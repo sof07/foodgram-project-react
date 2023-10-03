@@ -19,8 +19,7 @@ SECRET_KEY = '%zxtgft^6^nk3zdonq5*er+1l6(g(@2vf*wqbc_f#&k@+-+27i'
 
 # DEBUG = True
 
-ALLOWED_HOSTS = ['84.252.137.104', '127.0.0.1',
-                 'localhost', 'sof07.ddns.net', 'backend:8000']
+ALLOWED_HOSTS = ['*']
 
 
 INSTALLED_APPS = [
