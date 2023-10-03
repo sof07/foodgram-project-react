@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv('TOKEN', default="23GG")
 
 DEBUG = False
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['*'])
 
 # BASE_DIR = Path(__file__).resolve().parent.parent
 
