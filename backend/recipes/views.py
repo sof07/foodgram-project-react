@@ -19,6 +19,7 @@ from .serializers import (CustomUserSerializer, FavoriteRecipeSerializer,
                           IngredientSerializer, RecipeCreateSerializer,
                           RecipeFavoriteSerializer, SubscribeUserSerializer,
                           TagSerializer)
+from .paginators import CustomPagination
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
@@ -43,7 +44,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     ordering_fields = ('date')
-    # pagination_class = LimitOffsetPagination
+    pagination_class = CustomPagination
     filterset_class = RecipeFilter  # Поля для фильтрации
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
