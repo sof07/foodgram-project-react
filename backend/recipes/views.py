@@ -1,11 +1,12 @@
-import csv
-import os
 from collections import defaultdict
+from io import BytesIO
 
 from django.db.models import Q
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -51,9 +52,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             methods=['get'],
             url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
-
         shopping_cart_entries = ShoppingCart.objects.filter(user=request.user)
         ingredient_totals = defaultdict(float)
+
         for entry in shopping_cart_entries:
             recipe = entry.recipe
             recipe_ingredients = recipe.recipe_ingredients.all()
@@ -64,17 +65,34 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 total_amount = float(amount_per_serving)
                 ingredient_totals[ingredient] += total_amount
 
-        file_name = 'ingredients_list.csv'
-        with open(file_name, 'w', newline='') as file:
-            writer = csv.writer(file)
-            for ingredient, total_amount in ingredient_totals.items():
-                writer.writerow(
-                    [f'{ingredient.name.capitalize()}, {total_amount}, \
-                     {ingredient.measurement_unit}']
-                )
-        response = FileResponse(open(file_name, 'rb'), as_attachment=True)
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        os.remove(file_name)
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+
+        data = [["Ингридиенты", "Количество", "Единица измерения"]]
+        for ingredient, total_amount in ingredient_totals.items():
+            data.append([ingredient.name.capitalize(),
+                        total_amount, ingredient.measurement_unit])
+
+        table = Table(data)
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), (0.8, 0.8, 0.8)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), (0, 0, 0)),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), (0.9, 0.9, 0.9)),
+            ('GRID', (0, 0), (-1, -1), 1, (0, 0, 0)),
+        ])
+        table.setStyle(style)
+
+        elements.append(table)
+        doc.build(elements)
+
+        buffer.seek(0)
+        response = FileResponse(
+            buffer, as_attachment=True, filename='ingredients_list.pdf')
+
         return response
 
     @action(detail=True,
