@@ -2,6 +2,7 @@ import csv
 import os
 from collections import defaultdict
 
+from django.db.models import Q
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
@@ -21,11 +22,19 @@ from .serializers import (CustomUserSerializer, FavoriteRecipeSerializer,
 
 
 class IngredientViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
     filter_backends = (filters.SearchFilter, )
     search_fields = ('^name',)
+
+    def get_queryset(self):
+        queryset = Ingredient.objects.all()
+        search_param = self.request.query_params.get('name')
+
+        if search_param:
+            queryset = queryset.filter(Q(name__istartswith=search_param))
+
+        return queryset
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

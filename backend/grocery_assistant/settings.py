@@ -17,7 +17,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['*'])
 
 # SECRET_KEY = '%zxtgft^6^nk3zdonq5*er+1l6(g(@2vf*wqbc_f#&k@+-+27i'
 
-# # DEBUG = True
+# DEBUG = True
 
 # ALLOWED_HOSTS = ['*']
 
