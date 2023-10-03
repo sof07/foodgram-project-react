@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv('TOKEN', default="23GG")
 
 DEBUG = False
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
 
 # BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,7 +19,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
 
 # DEBUG = True
 
-# ALLOWED_HOSTS = ['84.252.137.104', '127.0.0.1', 'localhost', 'sof07.ddns.net']
+ALLOWED_HOSTS = ['84.252.137.104', '127.0.0.1', 'localhost', 'sof07.ddns.net']
 
 
 INSTALLED_APPS = [
