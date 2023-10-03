@@ -5,21 +5,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = os.getenv('TOKEN', default="23GG")
-
-DEBUG = False
-
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
-
 # BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECRET_KEY = '%zxtgft^6^nk3zdonq5*er+1l6(g(@2vf*wqbc_f#&k@+-+27i'
+# SECRET_KEY = os.getenv('TOKEN', default="23GG")
 
-# DEBUG = True
+# DEBUG = False
 
-# ALLOWED_HOSTS = ['84.252.137.104', '127.0.0.1', 'localhost', 'sof07.ddns.net']
+# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = '%zxtgft^6^nk3zdonq5*er+1l6(g(@2vf*wqbc_f#&k@+-+27i'
+
+DEBUG = True
+
+ALLOWED_HOSTS = ['84.252.137.104', '127.0.0.1', 'localhost', 'sof07.ddns.net']
 
 
 INSTALLED_APPS = [
@@ -71,23 +71,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'grocery_assistant.wsgi.application'
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'django'),
-        'USER': os.getenv('POSTGRES_USER', 'django_user'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', 5432)
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('POSTGRES_DB', 'django'),
+#         'USER': os.getenv('POSTGRES_USER', 'django_user'),
+#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+#         'HOST': os.getenv('DB_HOST', ''),
+#         'PORT': os.getenv('DB_PORT', 5432)
+#     }
+# }
 
 AUTH_USER_MODEL = 'users.CustomUser'
 

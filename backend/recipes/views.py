@@ -69,7 +69,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True,
             methods=['post', 'delete'],
             url_path='shopping_cart',
-            permission_classes=[permissions.IsAuthenticated]
             )
     def shopping_cart(self, request, pk=None):
         try:

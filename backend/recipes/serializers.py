@@ -200,10 +200,16 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         validate_ingredients(self, data)
         return data
 
+    def validate(self, data):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            raise serializers.ValidationError(
+                'Пользователь не авторизирован')
+        return data
+
     def create(self, validated_data):
         ingredients_data = validated_data.pop('recipe_ingredients')
         tags_data = validated_data.pop('tags')
-
         recipe = Recipe.objects.create(**validated_data)
         for ingredient_data in ingredients_data:
             IngredientRecipe.objects.create(
