@@ -156,6 +156,7 @@ class CustomUserViewSet(UserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
     lookup_field = 'pk'
+    permission_classes = [permissions.AllowAny]
 
     @action(
         detail=True,
@@ -202,7 +203,10 @@ class CustomUserViewSet(UserViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-    @action(detail=False, methods=['get'], url_path='subscriptions')
+    @action(detail=False,
+            methods=['get'],
+            url_path='subscriptions',
+            permission_classes=[permissions.IsAuthenticated])
     def subscriptions(self, request):
         user = self.request.user
         subscribed_authors = AuthorSubscription.objects.filter(
