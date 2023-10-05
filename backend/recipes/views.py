@@ -65,7 +65,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             file_name = 'ingredients_list.txt'
             with open(file_name, 'w', encoding='utf-8') as file:
-                file.write("Ingredient\tTotal Amount\tMeasurement Unit\n")
+                file.write("Ингридиенты\tКоличество\tЕдиница измерения\n")
                 for ingredient, total_amount in ingredient_totals.items():
                     line = (f"{ingredient.name.capitalize()}\
                             \t{total_amount}\t{ingredient.measurement_unit}\n")
