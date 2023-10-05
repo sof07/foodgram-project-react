@@ -40,10 +40,6 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ('name', 'author__username')
 
     def get_favorite_count(self, obj):
-        # Здесь вы можете написать код для получения общего числа добавления
-        # рецепта в избранное для конкретного рецепта (obj).
-        # Например, если у вас есть связь FavoriteRecipe с полем "recipe",
-        # то вы можете использовать что-то вроде:
         return Favorite.objects.filter(recipe=obj).count()
 
     get_favorite_count.short_description = 'Добавлено в избранное'

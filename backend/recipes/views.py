@@ -1,12 +1,10 @@
+import os
 from collections import defaultdict
-from io import BytesIO
 
 from django.db.models import Q
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -65,35 +63,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 total_amount = float(amount_per_serving)
                 ingredient_totals[ingredient] += total_amount
 
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
-        elements = []
+            file_name = 'ingredients_list.txt'
+            with open(file_name, 'w', encoding='utf-8') as file:
+                file.write("Ingredient\tTotal Amount\tMeasurement Unit\n")
+                for ingredient, total_amount in ingredient_totals.items():
+                    line = (f"{ingredient.name.capitalize()}\
+                            \t{total_amount}\t{ingredient.measurement_unit}\n")
+                    file.write(line)
 
-        data = [["Ингридиенты", "Количество", "Единица измерения"]]
-        for ingredient, total_amount in ingredient_totals.items():
-            data.append([ingredient.name.capitalize(),
-                        total_amount, ingredient.measurement_unit])
-
-        table = Table(data)
-        style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), (0.8, 0.8, 0.8)),
-            ('TEXTCOLOR', (0, 0), (-1, 0), (0, 0, 0)),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), (0.9, 0.9, 0.9)),
-            ('GRID', (0, 0), (-1, -1), 1, (0, 0, 0)),
-        ])
-        table.setStyle(style)
-
-        elements.append(table)
-        doc.build(elements)
-
-        buffer.seek(0)
-        response = FileResponse(
-            buffer, as_attachment=True, filename='ingredients_list.pdf')
-
-        return response
+            response = FileResponse(
+                open(file_name, 'rb'),
+                as_attachment=True,
+                content_type='text/plain')
+            response['Content-Disposition'] = (
+                f'attachment; filename="{file_name}"')
+            os.remove(file_name)
+            return response
 
     @action(detail=True,
             methods=['post', 'delete'],

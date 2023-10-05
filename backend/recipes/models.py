@@ -9,7 +9,7 @@ from users.models import CustomUser
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=250,
+        max_length=200,
         verbose_name='Название'
     )
     measurement_unit = models.CharField(
@@ -103,6 +103,11 @@ class Recipe(models.Model):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         ordering = ['author', 'date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('Название рецепта', 'name'),
+                name='Recipe'
+            )]
 
     def __str__(self):
         return self.text
@@ -134,6 +139,13 @@ class IngredientRecipe(models.Model):
         ],
         default=1
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('ingredient', 'recipe', 'amount'),
+                name='IngredientRecipe'
+            )]
 
 
 class Favorite(models.Model):
