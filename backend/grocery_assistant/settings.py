@@ -13,14 +13,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['*'])
 
-# BASE_DIR = Path(__file__).resolve().parent.parent
-
-# SECRET_KEY = '%zxtgft^6^nk3zdonq5*er+1l6(g(@2vf*wqbc_f#&k@+-+27i'
-
-# DEBUG = True
-
-# ALLOWED_HOSTS = ['*']
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -70,13 +62,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'grocery_assistant.wsgi.application'
 
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 DATABASES = {
     'default': {
@@ -139,11 +124,8 @@ EMAIL_SUBJECT = 'Confirmation letter.'
 EMAIL_BODY = 'Confirmation code is {code}'
 
 MEDIA_URL = '/media/'
-# ПОМЕНЯТЬ ЗДЕСЬ media на '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, '/media/')
 DJOSER = {
-    # 'USER_ID_FIELD': 'username',
-    # 'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
     'SERIALIZERS': {
         'token_create': 'recipes.serializers.CustomTokenCreateSerializer',
@@ -164,6 +146,6 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG',  # Set the desired logging level
+        'level': 'DEBUG',
     },
 }
