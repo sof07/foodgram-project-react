@@ -110,19 +110,25 @@ class CustomUserSerializer(UserSerializer):
                   'last_name', 'password', 'is_subscribed')
         extra_kwargs = {
             'password': {'write_only': True},
-            # 'email': {'required': True},
-            # 'username': {'required': True},
-            # 'id': {'required': True},
-            # 'first_name': {'required': True},
-            # 'last_name': {'required': True}
+            #     'email': {'required': True},
+            #     'username': {'required': True},
+            #     'id': {'required': True},
+            #     'first_name': {'required': True},
+            #     'last_name': {'required': True}
         }
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
             return False
-        return AuthorSubscription.objects.filter(subscriber=user,
-                                                 author=obj).exists()
+        return AuthorSubscription.objects.filter(subscriber=user, author=obj).exists()
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return attrs  # Если пользователь анонимный, не выполнять дополнительных проверок
+        # Ваши дополнительные проверки для аутентифицированных пользователей
+        return attrs
 
 
 class SubscribeUserSerializer(serializers.ModelSerializer):

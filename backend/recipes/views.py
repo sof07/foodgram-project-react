@@ -141,8 +141,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         user = request.user
         if request.method == 'POST':
-
-            print(self.get_object())
             if not Favorite.objects.filter(user=user, recipe=recipe).exists():
                 Favorite.objects.create(user=user, recipe=recipe)
                 response_serializer = RecipeFavoriteSerializer(recipe)
@@ -188,7 +186,7 @@ class CustomUserViewSet(UserViewSet):
         if request.method == 'POST':
             if user_to_subscribe == subscriber:
                 return Response(
-                    {"detail": "Вы не можете подписаться на себя."},
+                    {'detail': 'Вы не можете подписаться на себя.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             subscription, created = AuthorSubscription.objects.get_or_create(
@@ -200,11 +198,10 @@ class CustomUserViewSet(UserViewSet):
                     response_serializer.data,
                     status=status.HTTP_201_CREATED
                 )
-            else:
-                return Response(
-                    {"detail": "Вы уже подписаны на этого пользователя."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
+            return Response(
+                {'detail': 'Вы уже подписаны на этого пользователя.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         elif request.method == 'DELETE':
             user_to_unsubscribe = self.get_object()
             subscriber = self.request.user
@@ -213,12 +210,12 @@ class CustomUserViewSet(UserViewSet):
                     subscriber=subscriber, author=user_to_unsubscribe)
                 subscription.delete()
                 return Response(
-                    {"detail": "Вы успешно отписались от этого пользователя."},
+                    {'detail': 'Вы успешно отписались от этого пользователя.'},
                     status=status.HTTP_204_NO_CONTENT
                 )
             except AuthorSubscription.DoesNotExist:
                 return Response(
-                    {"detail": "Вы не были подписаны на этого пользователя."},
+                    {'detail': 'Вы не были подписаны на этого пользователя.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
