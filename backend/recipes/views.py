@@ -106,15 +106,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
                         response_serializer.data,
                         status=status.HTTP_201_CREATED
                     )
-                else:
-                    return Response(
-                        {
-                            'errors': 'Запрос от анонимного пользователя'
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            else:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {
+                        'errors': 'Рецепт уже в корзине'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response(
+                {
+                    'errors': 'Запрос от анонимного пользователя'
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
         elif request.method == 'DELETE':
             if user.is_authenticated:
                 ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
@@ -173,7 +177,6 @@ class CustomUserViewSet(UserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
     lookup_field = 'pk'
-    permission_classes = [permissions.AllowAny]
 
     @action(
         detail=True,
@@ -200,10 +203,11 @@ class CustomUserViewSet(UserViewSet):
                 )
             return Response(
                 {'detail': 'Вы уже подписаны на этого пользователя.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_400_BAD_REQUEST
             )
         elif request.method == 'DELETE':
             user_to_unsubscribe = self.get_object()
+
             subscriber = self.request.user
             try:
                 subscription = AuthorSubscription.objects.get(
@@ -229,7 +233,7 @@ class CustomUserViewSet(UserViewSet):
             subscriber=user).values('author')
         subscribed_users = CustomUser.objects.filter(pk__in=subscribed_authors)
 
-        paginator = PageNumberPagination()
+        paginator = CustomPagination()
         result_page = paginator.paginate_queryset(subscribed_users, request)
 
         response_serializer = SubscribeUserSerializer(
