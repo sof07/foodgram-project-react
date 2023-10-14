@@ -117,7 +117,10 @@ class CustomUserSerializer(UserSerializer):
         if user.is_anonymous:
             return False
         elif hasattr(user, 'email'):
-            return AuthorSubscription.objects.filter(subscriber=user, author=obj).exists()
+            return AuthorSubscription.objects.filter(
+                subscriber=user,
+                author=obj
+            ).exists()
 
 
 class SubscribeUserSerializer(serializers.ModelSerializer):

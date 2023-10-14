@@ -1,5 +1,6 @@
-from rest_framework.serializers import ValidationError
 import re
+
+from rest_framework.serializers import ValidationError
 
 
 def validate_reserved_username(value):
