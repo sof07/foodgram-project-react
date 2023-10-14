@@ -7,7 +7,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from users.models import AuthorSubscription, CustomUser
 
@@ -106,15 +105,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
                         response_serializer.data,
                         status=status.HTTP_201_CREATED
                     )
-                else:
-                    return Response(
-                        {
-                            'errors': 'Запрос от анонимного пользователя'
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            else:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {
+                        'errors': 'Рецепт уже в корзине'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response(
+                {
+                    'errors': 'Запрос от анонимного пользователя'
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
         elif request.method == 'DELETE':
             if user.is_authenticated:
                 ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
@@ -141,8 +144,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         user = request.user
         if request.method == 'POST':
-
-            print(self.get_object())
             if not Favorite.objects.filter(user=user, recipe=recipe).exists():
                 Favorite.objects.create(user=user, recipe=recipe)
                 response_serializer = RecipeFavoriteSerializer(recipe)
@@ -175,7 +176,6 @@ class CustomUserViewSet(UserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
     lookup_field = 'pk'
-    permission_classes = [permissions.AllowAny]
 
     @action(
         detail=True,
@@ -188,7 +188,7 @@ class CustomUserViewSet(UserViewSet):
         if request.method == 'POST':
             if user_to_subscribe == subscriber:
                 return Response(
-                    {"detail": "Вы не можете подписаться на себя."},
+                    {'detail': 'Вы не можете подписаться на себя.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             subscription, created = AuthorSubscription.objects.get_or_create(
@@ -200,25 +200,25 @@ class CustomUserViewSet(UserViewSet):
                     response_serializer.data,
                     status=status.HTTP_201_CREATED
                 )
-            else:
-                return Response(
-                    {"detail": "Вы уже подписаны на этого пользователя."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
+            return Response(
+                {'detail': 'Вы уже подписаны на этого пользователя.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         elif request.method == 'DELETE':
             user_to_unsubscribe = self.get_object()
+
             subscriber = self.request.user
             try:
                 subscription = AuthorSubscription.objects.get(
                     subscriber=subscriber, author=user_to_unsubscribe)
                 subscription.delete()
                 return Response(
-                    {"detail": "Вы успешно отписались от этого пользователя."},
+                    {'detail': 'Вы успешно отписались от этого пользователя.'},
                     status=status.HTTP_204_NO_CONTENT
                 )
             except AuthorSubscription.DoesNotExist:
                 return Response(
-                    {"detail": "Вы не были подписаны на этого пользователя."},
+                    {'detail': 'Вы не были подписаны на этого пользователя.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -232,7 +232,7 @@ class CustomUserViewSet(UserViewSet):
             subscriber=user).values('author')
         subscribed_users = CustomUser.objects.filter(pk__in=subscribed_authors)
 
-        paginator = PageNumberPagination()
+        paginator = CustomPagination()
         result_page = paginator.paginate_queryset(subscribed_users, request)
 
         response_serializer = SubscribeUserSerializer(

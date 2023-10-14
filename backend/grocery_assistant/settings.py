@@ -10,7 +10,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('TOKEN', default="23GG")
 
 DEBUG = False
-
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['*'])
 
 
@@ -124,7 +123,7 @@ EMAIL_SUBJECT = 'Confirmation letter.'
 EMAIL_BODY = 'Confirmation code is {code}'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, '/media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DJOSER = {
     'HIDE_USERS': False,
     'SERIALIZERS': {
@@ -132,8 +131,8 @@ DJOSER = {
         'current_user': 'recipes.serializers.CustomUserSerializer',
     },
     'PERMISSIONS': {
-        'user': ['rest_framework.permissions.AllowAny'],
-        'user_list': ['rest_framework.permissions.AllowAny'],
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.IsAuthenticated'],
     }
 }
 LOGGING = {

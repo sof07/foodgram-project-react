@@ -110,19 +110,17 @@ class CustomUserSerializer(UserSerializer):
                   'last_name', 'password', 'is_subscribed')
         extra_kwargs = {
             'password': {'write_only': True},
-            # 'email': {'required': True},
-            # 'username': {'required': True},
-            # 'id': {'required': True},
-            # 'first_name': {'required': True},
-            # 'last_name': {'required': True}
         }
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
             return False
-        return AuthorSubscription.objects.filter(subscriber=user,
-                                                 author=obj).exists()
+        elif hasattr(user, 'email'):
+            return AuthorSubscription.objects.filter(
+                subscriber=user,
+                author=obj
+            ).exists()
 
 
 class SubscribeUserSerializer(serializers.ModelSerializer):
@@ -145,6 +143,18 @@ class SubscribeUserSerializer(serializers.ModelSerializer):
     def get_recipes_count(self, obj):
         recipe_count = obj.recipes.aggregate(Count("id"))
         return recipe_count["id__count"]
+
+    def to_representation(self, instance):
+
+        data = super().to_representation(instance)
+        recipes_limit = self.context.get(
+            'request').query_params.get('recipes_limit')
+
+        if recipes_limit:
+            recipes_limit = int(recipes_limit)
+            data['recipes'] = data['recipes'][:recipes_limit]
+
+        return data
 
 
 class RecipeCreateIngridientsSerializer(serializers.ModelSerializer):
@@ -203,8 +213,17 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         user = self.context['request'].user
         if user.is_anonymous:
+            raise serializers.ValidationError('Пользователь не авторизирован')
+        if 'author' in data and data['author'] != user:
             raise serializers.ValidationError(
-                'Пользователь не авторизирован')
+                'Редактировать рецепт может только автор')
+        # if not 'tags' in data:
+        #     raise serializers.ValidationError(
+        #         'Отсутствует поле tags')
+        # if not 'ingredients' in data:
+        #     raise serializers.ValidationError(
+        #         'Отсутствует поле ingredients')
+
         return data
 
     def create(self, validated_data):
