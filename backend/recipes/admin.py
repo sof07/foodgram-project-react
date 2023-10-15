@@ -46,12 +46,3 @@ class RecipeAdmin(admin.ModelAdmin):
     get_favorite_count.short_description = 'Добавлено в избранное'
 
     inlines = [IngredientRecipeInline]
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        model_fields = Recipe._meta.get_fields()
-        for field in model_fields:
-            if hasattr(field, 'blank'):
-                field.blank = False
-
-        return form
