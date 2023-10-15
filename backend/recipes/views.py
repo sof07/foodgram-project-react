@@ -52,32 +52,32 @@ class RecipeViewSet(viewsets.ModelViewSet):
         shopping_cart_entries = ShoppingCart.objects.filter(user=request.user)
         ingredient_totals = defaultdict(float)
 
-        for entry in shopping_cart_entries:
-            recipe = entry.recipe
-            recipe_ingredients = recipe.recipe_ingredients.all()
+        file_name = 'ingredients_list.txt'
+        with open(file_name, 'a', encoding='utf-8') as file:
+            file.write('Ингридиенты\tКоличество\tЕдиница измерения\n')
 
-            for ingredient_entry in recipe_ingredients:
-                ingredient = ingredient_entry.ingredient
-                amount_per_serving = ingredient_entry.amount
-                total_amount = float(amount_per_serving)
-                ingredient_totals[ingredient] += total_amount
+            for entry in shopping_cart_entries:
+                recipe = entry.recipe
+                recipe_ingredients = recipe.recipe_ingredients.all()
 
-            file_name = 'ingredients_list.txt'
-            with open(file_name, 'w', encoding='utf-8') as file:
-                file.write("Ингридиенты\tКоличество\tЕдиница измерения\n")
-                for ingredient, total_amount in ingredient_totals.items():
-                    line = (f"{ingredient.name.capitalize()}\
-                            \t{total_amount}\t{ingredient.measurement_unit}\n")
-                    file.write(line)
+                for ingredient_entry in recipe_ingredients:
+                    ingredient = ingredient_entry.ingredient
+                    amount_per_serving = ingredient_entry.amount
+                    total_amount = float(amount_per_serving)
+                    ingredient_totals[ingredient] += total_amount
 
-            response = FileResponse(
-                open(file_name, 'rb'),
-                as_attachment=True,
-                content_type='text/plain')
-            response['Content-Disposition'] = (
-                f'attachment; filename="{file_name}"')
-            os.remove(file_name)
-            return response
+            for ingredient, total_amount in ingredient_totals.items():
+                line = (
+                    f'{ingredient.name.capitalize()}\t{total_amount}\t{ingredient.measurement_unit}\n')
+                file.write(line)
+
+        response = FileResponse(
+            open(file_name, 'rb'),
+            as_attachment=True,
+            content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        os.remove(file_name)
+        return response
 
     @action(detail=True,
             methods=['post', 'delete'],
