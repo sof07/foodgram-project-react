@@ -105,7 +105,7 @@ class Recipe(models.Model):
         ordering = ['-date', 'author']
         constraints = [
             models.UniqueConstraint(
-                fields=('Название рецепта', 'name'),
+                fields=('text', 'name'),
                 name='Recipe'
             )]
 
