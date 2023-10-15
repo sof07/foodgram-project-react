@@ -68,7 +68,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             for ingredient, total_amount in ingredient_totals.items():
                 line = (
-                    f'{ingredient.name.capitalize()}\t{total_amount}\t{ingredient.measurement_unit}\n')
+                    f'{ingredient.name.capitalize()}\t'
+                    f'{total_amount}\t'
+                    f'{ingredient.measurement_unit}\n'
+                )
                 file.write(line)
 
         response = FileResponse(
