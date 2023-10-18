@@ -217,13 +217,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         if 'author' in data and data['author'] != user:
             raise serializers.ValidationError(
                 'Редактировать рецепт может только автор')
-        # if not 'tags' in data:
-        #     raise serializers.ValidationError(
-        #         'Отсутствует поле tags')
-        # if not 'ingredients' in data:
-        #     raise serializers.ValidationError(
-        #         'Отсутствует поле ingredients')
-
         return data
 
     def create(self, validated_data):
