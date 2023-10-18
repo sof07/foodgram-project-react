@@ -36,9 +36,10 @@ class IngredientAdmin(admin.ModelAdmin):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'cooking_time',
-                    'image', 'get_favorite_count')
-    list_filter = ('author', 'tags', 'ingredients')
-    search_fields = ('name', 'author__username')
+                    'image', 'get_favorite_count',)
+    list_filter = ('author', 'tags', 'ingredients',)
+    search_fields = ('name', 'author__username',)
+    filter_horizontal = ['tags']
 
     def get_favorite_count(self, obj):
         return Favorite.objects.filter(recipe=obj).count()
