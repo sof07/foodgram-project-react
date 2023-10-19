@@ -11,6 +11,7 @@ def validate_tags(self, data):
 
 
 def validate_ingredients(self, data):
+    print(f'>>>>>>>>>>>>>>>>>>>>{self}')
     if not data:
         raise serializers.ValidationError(
             'Рецепт не может быть без ингридиентов')

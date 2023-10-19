@@ -126,7 +126,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             else:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     @action(detail=True,
             methods=['post', 'delete'],

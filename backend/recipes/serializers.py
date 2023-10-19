@@ -235,20 +235,26 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, recipe, validated_data):
-        tags_data = validated_data.pop('tags')
-        ingredients_data = validated_data.pop('recipe_ingredients')
+        tags_data = validated_data.pop('tags', None)
+        ingredients_data = validated_data.pop('recipe_ingredients', None)
+
         recipe.name = validated_data.get('name', recipe.name)
         recipe.text = validated_data.get('text', recipe.text)
         recipe.image = validated_data.get('image', recipe.image)
-        recipe.recipe_ingredients.all().delete()
-        for ingredient_data in ingredients_data:
-            IngredientRecipe.objects.create(
-                recipe=recipe,
-                ingredient_id=ingredient_data['id'].id,
-                amount=ingredient_data['amount']
-            )
-
-        recipe.tags.set(tags_data)
+        if tags_data is not None:
+            recipe.tags.set(tags_data)
+        else:
+            raise serializers.ValidationError('Поле tags обязательно')
+        if ingredients_data is not None:
+            recipe.recipe_ingredients.all().delete()
+            for ingredient_data in ingredients_data:
+                IngredientRecipe.objects.create(
+                    recipe=recipe,
+                    ingredient_id=ingredient_data['id'].id,
+                    amount=ingredient_data['amount']
+                )
+        else:
+            raise serializers.ValidationError('Поле ingredients обязательно')
         recipe.save()
         return recipe
 

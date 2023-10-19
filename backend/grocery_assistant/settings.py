@@ -61,7 +61,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'grocery_assistant.wsgi.application'
 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
