@@ -44,7 +44,11 @@ class AuthorSubscription(models.Model):
         verbose_name='Дата создания')
 
     class Meta:
-        unique_together = ('subscriber', 'author')
+        constraints = [
+            models.UniqueConstraint(
+                fields=('author', 'subscriber'),
+                name='AuthorSubscription'
+            )]
 
     def __str__(self):
         return f"{self.subscriber} -> {self.author}"
