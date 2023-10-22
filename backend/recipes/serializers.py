@@ -1,14 +1,13 @@
-# import base64
+import base64
 
 import webcolors
 from django.contrib.auth import authenticate
-# from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile
 from django.db.models import Count
 from djoser.compat import get_user_email_field_name
 from djoser.conf import settings
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
-from rest_framework.serializers import ImageField
 from users.models import AuthorSubscription, CustomUser
 
 from .models import Favorite, Ingredient, IngredientRecipe, Recipe, Tag
@@ -40,15 +39,15 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['name', 'color', 'slug']
 
 
-# class Base64ImageField(serializers.ImageField):
-#     def to_internal_value(self, data):
-#         if isinstance(data, str) and data.startswith('data:image'):
-#             format, imgstr = data.split(';base64,')
-#             ext = format.split('/')[-1]
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
 
-#             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
 
-#         return super().to_internal_value(data)
+        return super().to_internal_value(data)
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
@@ -184,7 +183,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
-    image = ImageField(use_url=False)
+    image = Base64ImageField(allow_null=True)
     author = CustomUserSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
