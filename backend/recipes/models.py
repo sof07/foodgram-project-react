@@ -83,7 +83,8 @@ class Recipe(models.Model):
             validators=[
                 validators.MinValueValidator(
                     1,
-                    message='Время приготовлениене может быть меньше 1 минуты'
+                    message='Время приготовлениене \
+                        не может быть меньше 1 минуты'
                 )]
         )
     )
