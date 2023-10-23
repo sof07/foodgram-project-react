@@ -170,7 +170,11 @@ class RecipeCreateIngridientsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientRecipe
-        fields = ['id', 'name', 'measurement_unit', 'amount']
+        fields = ('id', 'name', 'measurement_unit', 'amount',)
+
+    def validate_id(self, data):
+        validate_ingredients(self, data)
+        return data
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
@@ -203,10 +207,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     def validate_tags(self, data):
         validate_tags(self, data)
-        return data
-
-    def validate_ingredients(self, data):
-        validate_ingredients(self, data)
         return data
 
     def validate(self, data):
