@@ -11,10 +11,16 @@ def validate_tags(self, data):
 
 
 def validate_ingredients(self, data):
-    print(f'>>>>>>>>>>>>>>>>>>>>{self}')
-    if not data:
+    # if not data:
+    #     print('УПС')
+    #     raise serializers.ValidationError(
+    #         'Рецепт не может быть без ингридиентов '
+    #     )
+    if not data or not any('id' in ingredient_data
+                           for ingredient_data in data):
         raise serializers.ValidationError(
-            'Рецепт не может быть без ингридиентов')
+            'Рецепт не может быть без ингридиентов '
+        )
     unique_ingredients = []
     for ingredient_data in data:
         ingredient_id = ingredient_data['id']

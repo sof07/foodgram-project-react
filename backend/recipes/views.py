@@ -43,7 +43,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     ordering_fields = ('date')
     pagination_class = CustomPagination
-    filterset_class = RecipeFilter  # Поля для фильтрации
+    filterset_class = RecipeFilter
 
     @action(detail=False,
             methods=['get'],
@@ -84,7 +84,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True,
             methods=['post', 'delete'],
-            url_path='shopping_cart',)
+            url_path='shopping_cart',
+            permission_classes=[permissions.IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         try:
             recipe = Recipe.objects.get(pk=pk)
@@ -99,34 +100,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         user = request.user
         if request.method == 'POST':
-            if user.is_authenticated:
-                if not ShoppingCart.objects.filter(user=user, recipe=recipe).\
-                        exists():
-                    ShoppingCart.objects.create(user=user, recipe=recipe)
-                    response_serializer = RecipeFavoriteSerializer(recipe)
-                    return Response(
-                        response_serializer.data,
-                        status=status.HTTP_201_CREATED
-                    )
+            if not ShoppingCart.objects.filter(user=user, recipe=recipe).\
+                    exists():
+                ShoppingCart.objects.create(user=user, recipe=recipe)
+                response_serializer = RecipeFavoriteSerializer(recipe)
                 return Response(
-                    {
-                        'errors': 'Рецепт уже в корзине'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    response_serializer.data,
+                    status=status.HTTP_201_CREATED
                 )
             return Response(
                 {
-                    'errors': 'Запрос от анонимного пользователя'
+                    'errors': 'Рецепт уже в корзине'
                 },
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         elif request.method == 'DELETE':
-            if user.is_authenticated:
-                ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            else:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True,
             methods=['post', 'delete'],
