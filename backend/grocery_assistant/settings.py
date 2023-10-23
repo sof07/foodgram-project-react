@@ -61,6 +61,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'grocery_assistant.wsgi.application'
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -122,6 +123,7 @@ EMAIL_SUBJECT = 'Confirmation letter.'
 EMAIL_BODY = 'Confirmation code is {code}'
 
 MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, '/media/')
 MEDIA_ROOT = os.path.join(BASE_DIR, '/media/')
 DJOSER = {
     'HIDE_USERS': False,
