@@ -9,10 +9,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('TOKEN', default="23GG")
 
-# DEBUG = False
-# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['*'])
-DEBUG = True
-ALLOWED_HOSTS = ['84.252.137.104', '127.0.0.1', 'localhost', 'sof07.ddns.net']
+DEBUG = False
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default=['*'])
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -65,20 +64,14 @@ WSGI_APPLICATION = 'grocery_assistant.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'django'),
+        'USER': os.getenv('POSTGRES_USER', 'django_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
 }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('POSTGRES_DB', 'django'),
-#         'USER': os.getenv('POSTGRES_USER', 'django_user'),
-#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-#         'HOST': os.getenv('DB_HOST', ''),
-#         'PORT': os.getenv('DB_PORT', 5432)
-#     }
-# }
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
@@ -130,7 +123,7 @@ EMAIL_SUBJECT = 'Confirmation letter.'
 EMAIL_BODY = 'Confirmation code is {code}'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, '/media/')
 DJOSER = {
     'HIDE_USERS': False,
     'SERIALIZERS': {
