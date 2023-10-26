@@ -1,8 +1,9 @@
 from django.contrib import admin
+from django.forms import ModelForm
 
 from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                      ShoppingCart, Tag)
-from django.forms import ModelForm
+
 admin.site.empty_value_display = 'Не задано'
 
 
