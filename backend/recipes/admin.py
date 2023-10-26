@@ -13,12 +13,11 @@ class IngredientRecipeForm(ModelForm):
         self.fields['ingredient'].required = True
 
     class Meta:
-        model = IngredientRecipe
-        fields = ('ingredient', 'recipe', 'amount')
+        model = Recipe
+        fields = '__all__'
 
 
 class IngredientRecipeInline(admin.TabularInline):
-    form = IngredientRecipeForm
     model = IngredientRecipe
     extra = 1
     # min_num = 1
@@ -50,6 +49,7 @@ class IngredientAdmin(admin.ModelAdmin):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    form = IngredientRecipeForm
     list_display = ('name', 'author', 'cooking_time',
                     'image', 'get_favorite_count',)
     list_filter = ('author', 'tags', 'ingredients',)
