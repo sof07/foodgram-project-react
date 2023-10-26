@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
 from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
@@ -13,11 +14,12 @@ class IngredientRecipeForm(ModelForm):
         self.fields['ingredient'].required = True
 
     class Meta:
-        model = Recipe
-        fields = '__all__'
+        model = IngredientRecipe
+        fields = ('ingredient', 'recipe', 'amount')
 
 
 class IngredientRecipeInline(admin.TabularInline):
+    form = IngredientRecipeForm
     model = IngredientRecipe
     extra = 1
     # min_num = 1
@@ -47,9 +49,28 @@ class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+class IngredientRecipeForm(ModelForm):
+    class Meta:
+        model = IngredientRecipe
+        fields = ('ingredient', 'recipe', 'amount')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        ingredients = cleaned_data.get('ingredient')
+
+        if not ingredients:
+            raise ValidationError('At least one ingredient is required.')
+
+
+class IngredientRecipeInline(admin.TabularInline):
+    form = IngredientRecipeForm
+    model = IngredientRecipe
+    extra = 0  # Set extra to 0
+    min_num = 1  # Set min_num to 1
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    form = IngredientRecipeForm
     list_display = ('name', 'author', 'cooking_time',
                     'image', 'get_favorite_count',)
     list_filter = ('author', 'tags', 'ingredients',)
