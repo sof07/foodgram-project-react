@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                      ShoppingCart, Tag)
+admin.site.empty_value_display = 'Не задано'
 
 
 class IngredientRecipeInline(admin.TabularInline):
