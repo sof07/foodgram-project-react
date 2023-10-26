@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
 from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
@@ -11,6 +12,10 @@ class IngredientRecipeForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['ingredient'].required = True
+
+    def clean_ingredient(self):
+        if not self.cleaned_data['ingredient']:
+            raise ValidationError('Поле обязательно')
 
     class Meta:
         model = IngredientRecipe
