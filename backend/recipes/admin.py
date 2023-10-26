@@ -13,10 +13,6 @@ class IngredientRecipeForm(ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['ingredient'].required = True
 
-    def clean_ingredient(self):
-        if not self.cleaned_data['ingredient']:
-            raise ValidationError('Поле обязательно')
-
     class Meta:
         model = IngredientRecipe
         fields = ('ingredient', 'recipe', 'amount')
@@ -26,7 +22,7 @@ class IngredientRecipeInline(admin.TabularInline):
     form = IngredientRecipeForm
     model = IngredientRecipe
     extra = 1
-    min_num = 1
+    # min_num = 1
 
 
 @admin.register(Tag)
