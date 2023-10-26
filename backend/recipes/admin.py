@@ -59,14 +59,14 @@ class IngredientRecipeForm(ModelForm):
         ingredients = cleaned_data.get('ingredient')
 
         if not ingredients:
-            raise ValidationError('At least one ingredient is required.')
+            raise ValidationError('Должен быть хотя бы 1 ингридиент')
 
 
 class IngredientRecipeInline(admin.TabularInline):
     form = IngredientRecipeForm
     model = IngredientRecipe
     extra = 0  # Set extra to 0
-    min_num = 1  # Set min_num to 1
+    # min_num = 1  # Set min_num to 1
 
 
 @admin.register(Recipe)
