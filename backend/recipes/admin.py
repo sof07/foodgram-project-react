@@ -68,7 +68,7 @@ class IngredientRecipeInline(admin.TabularInline):
     extra = 1
     min_num = 1
     autocomplete_fields = ('ingredient',)
-    can_delete_extra = False
+    can_delete = False
 
 
 @admin.register(Recipe)
