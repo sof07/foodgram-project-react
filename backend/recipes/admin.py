@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
 from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
@@ -49,21 +48,7 @@ class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
-class IngredientRecipeForm(ModelForm):
-    class Meta:
-        model = IngredientRecipe
-        fields = ('ingredient', 'amount')
-
-    def clean(self):
-        cleaned_data = super().clean()
-        ingredients = cleaned_data.get('ingredient')
-
-        if not ingredients:
-            raise ValidationError('Должен быть хотя бы 1 ингридиент')
-
-
 class IngredientRecipeInline(admin.TabularInline):
-    form = IngredientRecipeForm
     model = IngredientRecipe
     extra = 3
     min_num = 1
