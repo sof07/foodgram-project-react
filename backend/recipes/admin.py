@@ -67,7 +67,6 @@ class IngredientRecipeInline(admin.TabularInline):
     model = IngredientRecipe
     extra = 1
     min_num = 1
-    verbose_name = 'Ингредиенты'
     autocomplete_fields = ('ingredient',)
 
 
