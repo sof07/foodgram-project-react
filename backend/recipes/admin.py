@@ -65,7 +65,7 @@ class IngredientRecipeForm(ModelForm):
 class IngredientRecipeInline(admin.TabularInline):
     form = IngredientRecipeForm
     model = IngredientRecipe
-    extra = 1
+    extra = 3
     min_num = 1
     autocomplete_fields = ('ingredient',)
     can_delete = False
