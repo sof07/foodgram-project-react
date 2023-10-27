@@ -52,7 +52,7 @@ class IngredientAdmin(admin.ModelAdmin):
 class IngredientRecipeForm(ModelForm):
     class Meta:
         model = IngredientRecipe
-        fields = ('ingredient', 'recipe', 'amount')
+        fields = ('ingredient', 'amount')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -67,6 +67,8 @@ class IngredientRecipeInline(admin.TabularInline):
     model = IngredientRecipe
     extra = 1
     min_num = 1
+    raw_id_fields = ['ingredient']
+    verbose_name = 'Ингредиенты'
 
 
 @admin.register(Recipe)
