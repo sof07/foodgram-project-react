@@ -1,5 +1,5 @@
 from django.contrib import admin
-
+from django.forms import ModelForm
 from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                      ShoppingCart, Tag)
 
@@ -30,12 +30,23 @@ class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+class PostForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['ingredient'].required = True
+
+    class Meta:
+        model = IngredientRecipe
+        fields = ('ingredient', 'amount')
+
+
 class IngredientRecipeInline(admin.TabularInline):
+    form = PostForm
     model = IngredientRecipe
     extra = 3
-    min_num = 1
+    # min_num = 1
     autocomplete_fields = ('ingredient',)
-    can_delete = False
+    # can_delete = False
 
 
 @admin.register(Recipe)
