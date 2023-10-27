@@ -7,23 +7,6 @@ from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
 admin.site.empty_value_display = 'Не задано'
 
 
-class IngredientRecipeForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['ingredient'].required = True
-
-    class Meta:
-        model = IngredientRecipe
-        fields = ('ingredient', 'recipe', 'amount')
-
-
-class IngredientRecipeInline(admin.TabularInline):
-    form = IngredientRecipeForm
-    model = IngredientRecipe
-    extra = 1
-    # min_num = 1
-
-
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'color', 'slug')
