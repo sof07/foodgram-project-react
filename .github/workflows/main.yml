@@ -1,4 +1,3 @@
-# .github/workflows/main.yml
 name: Main foodgram workflow
 
 on:
@@ -8,29 +7,19 @@ on:
 
 jobs:
   tests:
-    # Разворачиваем окружение:
     runs-on: ubuntu-latest
-
     steps:
-    # Копируем код проекта
     - name: Копируем код проекта
       uses: actions/checkout@v3
-    # Устанавливаем Python с помощью action
     - name: Устанавливаем Python
       uses: actions/setup-python@v4
-    # В action setup-python@v4 передаём параметр — версию Python
       with:
         python-version: 3.11
-    # Обновляем pip, устанавливаем flake8 и flake8-isort, 
-    # устанавливаем зависимости проекта
     - name: Устанавливаем зависимости, flake8 и flake8-isort
       run: |
         python -m pip install --upgrade pip 
         pip install flake8==6.0.0 flake8-isort==6.0.0
-    # Запускаем flake8
     - name: Запускаем flake8
-      # Вызываем flake8 и указываем ему,
-      # что нужно проверить файлы только в папке backend/
       run: python -m flake8 backend/
   
   build_and_push_to_docker_hub:
@@ -39,34 +28,19 @@ jobs:
     needs: tests
     steps:
       - name: Получение исходного кода из репозитория
-        # Получение исходного кода из репозитория
         uses: actions/checkout@v3
       - name: Установка сборщика контейнеров Docker
-        # Установка сборщика контейнеров Docker
         uses: docker/setup-buildx-action@v2
       - name: Авторизация на Docker Hub
-        # Авторизация на Docker Hub
         uses: docker/login-action@v2
-        # При помощи with передаём в action параметры username и password
         with:
           username: ${{ secrets.DOCKER_USERNAME }} 
           password: ${{ secrets.DOCKER_PASSWORD }}
-          # Хорошо ли держать логин и пароль прямо в коде workflow?
-          # Нет, это нехорошо
       - name: Одновременный билд и пуш образа в Docker Hub
-        # Одновременный билд и пуш образа в Docker Hub
         uses: docker/build-push-action@v4
         with:
-          # Параметр context: ./backend/ указывает, что нужный Dockerfile 
-          # находится в ./backend/
           context: ./backend/
-          # Параметр push: true указывает, что образ нужно не только собрать,
-          # но и отправить на Docker Hub
           push: true
-          # В параметре tags задаётся название и тег для образа.
-          # Для каждого пересобранного образа 
-          # устанавливаем тег latest, чтобы потом
-          # на сервере и в docker-compose.yml не указывать версию
           tags: sof07/foodgram_backend:latest 
 
   build_frontend_and_push_to_docker_hub:
@@ -110,17 +84,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: 
-      # Дождёмся билда всех образов 
       - build_and_push_to_docker_hub
       - build_frontend_and_push_to_docker_hub
       - build_gateway_and_push_to_docker_hub
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-    # Копируем docker-compose.production.yml на продакшен-сервер
     - name: Копируем docker-compose.production.yml на продакшен-сервер
       uses: appleboy/scp-action@master
-    # Передаём параметры для action appleboy/scp-action:
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
@@ -135,9 +106,6 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        # Параметр script передаёт в action appleboy/ssh-action команды,
-        # которые нужно выполнить на сервере, 
-        # с которым установлено соединение
         script: |
           cd foodgram
           # Выполняет pull образов с Docker Hub
